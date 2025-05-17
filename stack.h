@@ -22,3 +22,19 @@ typedef struct StackNode{
 } StackNode;
 
 // Struktur Stack
+typedef struct {
+  StackNode* top;
+  int size;
+} Stack;
+
+// Fungsi - fungsi dasar stack 
+
+void inisialisasiStack(Stack* s);
+bool apakahStackKosong(Stack* s);
+void push(Stack* s, MatchResult data);
+bool pop(Stack* s, MatchResult* result);
+bool peek(Stack* s, MatchResult* result);
+void clearStack(Stack* s);
+int getStackSize(Stack* s);
+
+#endif
