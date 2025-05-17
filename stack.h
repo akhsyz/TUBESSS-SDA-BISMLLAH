@@ -1,3 +1,8 @@
+/*
+PIC : akhsya 
+NIM : 241524039
+*/
+
 #ifndef STACK_H
 #define STACK_H
 
@@ -8,7 +13,7 @@
 // Struktur data buat nyimpen hasil pertandingan 
 
 typedef struct {
-  int matchID     // ID pertandingan 
+  int matchID;     // ID pertandingan 
   int team1Id;    // ID tim 1
   int team2Id;    // ID tim 2
   int idPemenang; // ID pemenang 
