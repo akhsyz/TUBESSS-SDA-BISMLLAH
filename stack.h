@@ -14,9 +14,11 @@ NIM : 241524039
 
 typedef struct {
   int matchID;     // ID pertandingan 
-  int team1Id;    // ID tim 1
-  int team2Id;    // ID tim 2
-  int idPemenang; // ID pemenang 
+  char namaTim1[50];    // Nama tim 1
+  char namaTim2[50];    // Nama tim 2
+  char namaTimPemenang; // Nama tim pemenang
+  int skorTim1;         // Skor tim 1
+  int skorTim2;         // Skor tim 2 
   int nomorRonde; // Nomor ronde/babak
 } MatchResult;
 
@@ -41,5 +43,7 @@ bool pop(Stack* s, MatchResult* result);
 bool peek(Stack* s, MatchResult* result);
 void clearStack(Stack* s);
 int getStackSize(Stack* s);
+void tampilkanHistori(Stack* s); // Tampilkan riwayat pertandingan
+void undoMatch(Stack* s, Queue* queue); // Batalkan pertandingan dan kembalikan tim ke Queue
 
 #endif
