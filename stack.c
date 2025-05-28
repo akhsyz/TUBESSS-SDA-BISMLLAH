@@ -72,11 +72,26 @@ int getStackSize(Stack* s){
 
 // Tampilkan riwayat pertandingan
 void tampilkanHistori(){
-
+  if (apakahStackKosong(s)){
+    printf("Riwayat pertandingan kosong.\n");
+    return;
+  }
+  printf("\nRiwayat Pertandingan:\n");
+  printf("------------------------------------------------------------\n");
+  printf("%-5s %-15s %-15s %-15s %-7s %-5s\n", 
+           "ID", "Tim 1", "Tim 2", "Pemenang", "Skor", "Babak");
+  printf("------------------------------------------------------------\n");
+  StackNode* current = s
 }
 
 // Batalkan pertandingan terakhir dan kembalikan tim ke Queue
-void undoMatch(){
-
+void undoMatch(Stack* s){
+  if (apakahStackKosong(s)){
+    printf("Tidak ada pertandingan untuk di-undo\n");
+    return;
+  }
+  MatchResult lastMatch = peek(s);
+  printf("Meng-undo pertandingan: %s vs %s\n", lastMatch.namaTim1, lastMatch.namaTim2);
+  pop(s);
 }
 

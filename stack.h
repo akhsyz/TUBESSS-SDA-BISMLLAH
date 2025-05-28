@@ -31,7 +31,7 @@ typedef struct StackNode{
 // Struktur Stack
 typedef struct {
   StackNode* top;
-  int size;
+  int size ; // ini masih ngga tau sesuai dinamis atau statis
 } Stack;
 
 // Fungsi - fungsi dasar stack 
