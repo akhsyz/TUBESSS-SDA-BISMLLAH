@@ -6,7 +6,7 @@ NIM : 241524035
 #ifndef QUEUE_H
 #define QUEUE_H
 
-#include "convention.h"
+#include "linkedlist.h"
 
 typedef struct {
     addressList head;
@@ -14,8 +14,8 @@ typedef struct {
 } Queue;
 
 void initQueue(Queue *Q);
-void enqueue(Queue *Q, infotype namaTim);
+void enqueue(Queue *Q, addressList node);
 void dequeue(Queue *Q, infotype *namaTim);
-void manageSeed(Queue *Q);
+void reverseQueue(Queue *Q);
 
 #endif

@@ -10,18 +10,18 @@ void initQueue(Queue *Q) {
     Q->tail = NULL;
 }
 
-void enqueue(Queue *Q, infotype namaTim) {
-    addressList newNode = createNode(namaTim);
-    if (newNode == NULL) {
-        printf("Gagal membuat node baru untuk Queue.\n");
+void enqueue(Queue *Q, addressList node) {
+    if (node == NULL) {
+        printf("Node tidak valid untuk enqueue.\n");
         return;
     }
-    insertAtLast(&(Q->head), newNode);
+
+    insertAtLast(&(Q->head), node);
+
     if (Q->tail == NULL) {
-        Q->tail = newNode;
+        Q->tail = node; 
     } else {
-        Q->tail->next = newNode;
-        Q->tail = newNode;
+        Q->tail = node; 
     }
 }
 
@@ -31,31 +31,28 @@ void dequeue(Queue *Q, infotype *namaTim) {
         *namaTim = NULL;
         return;
     }
-    deleteFirst(&(Q->head), namaTim);
+    deleteFirst(&(Q->head), namaTim); 
     if (Q->head == NULL) {
-        Q->tail = NULL;
+        Q->tail = NULL; 
     }
 }
 
-void manageSeed(Queue *Q) {
-    if (Q->head == NULL) {
-        printf("Queue kosong, tidak bisa membuat seed.\n");
-        return;
+void reverseQueue(Queue *Q) {
+    if (Q->head == NULL || Q->head == Q->tail) {
+        return; 
     }
-    printf("\n=== Penjadwalan Pertandingan ===\n");
-    int seed = 1;
-    while (Q->head != NULL && Q->head->next != NULL) {
-        infotype tim1, tim2;
-        dequeue(Q, &tim1);
-        dequeue(Q, &tim2);
-        printf("Seed %d: %s vs %s\n", seed++, tim1, tim2);
-        free(tim1);
-        free(tim2);
+
+    addressList prev = NULL;
+    addressList current = Q->head;
+    addressList next = NULL;
+    Q->tail = Q->head; 
+
+    while (current != NULL) {
+        next = current->next;
+        current->next = prev;
+        prev = current;      
+        current = next;      
     }
-    if (Q->head != NULL) {
-        infotype tim;
-        dequeue(Q, &tim);
-        printf("Seed %d: %s vs BYE\n", seed++, tim);
-        free(tim);
-    }
+
+    Q->head = prev; 
 }
