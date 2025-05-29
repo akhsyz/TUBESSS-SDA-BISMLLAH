@@ -61,3 +61,42 @@ void mainMenu() {
         }
     }
 }
+
+void showsTambahTim(addressList *head) {
+    printf("Jumlah Tim Yang Akan Bertanding: ");
+	//panggil modul logika tambah tim
+}
+
+void showsHapusTim(addressList *head) {
+    displayLinkedList(*head);
+	//panggil logika hapus tim
+}
+
+void showsDaftarTim(addressList head) {
+    displayLinkedList(head);
+}
+
+void showsJadwalkanPertandingan(addressList head, Queue *matchQueue, addressTree *tournamentTree) {
+    //panggil logika jadwalkan pertandingan
+}
+
+void showsInputResult(addressTree *tournamentTree, addressList head, Stack *matchHistory) {
+    //panggil logika input hasil pertandingan
+}
+
+void showsUndoResult(addressTree *tournamentTree, addressList head, Stack *matchHistory) {
+    //panggil logika undo hasil pertandingan
+}
+
+void showsBracket(addressTree tournamentTree, addressList head) {
+    //panggil modul bracket sesuai jumlah tim yang bertanding
+}
+
+void showsStatistik(addressList head) {
+    //panggil logika hitung statistik
+}
+
+void exitProgram(addressList *head, Queue *matchQueue, addressTree *tournamentTree, Stack *matchHistory) {
+    printf("TERIMAKASIH SUDAH MENGGUNAKAN PROGRAM BAGAN KAMI!!!\n");
+    //panggil logika save file dan dealokasi 
+}
