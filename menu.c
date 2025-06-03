@@ -39,19 +39,19 @@ void mainMenu() {
                 showsDaftarTim();
                 break;
             case 4:
-                showsJadwalkanPertandingan();
+                // langsung panggil modul logika penjadwalan pertandingan
                 break;
             case 5:
-                showsInputResult();
+                // langsung panggil modul logika input hasil sebuah pertandingan
                 break;
             case 6:
-                showsUndoResult();
+                // langsung panggil modul logika undo sebuah pertandingan 
                 break;
             case 7:
-                showsBracket();
+                // langsung panggil modul template bracket tim (sesuai dengan jumlah tim yang terdaftar)
                 break;
             case 8:
-                showsStatistik();
+                // langsung panggil modul untuk menampilkan statistik tim
                 break;
             case 9:
                 exitProgram();
@@ -74,26 +74,6 @@ void showsHapusTim(addressList *head) {
 
 void showsDaftarTim(addressList head) {
     displayLinkedList(head);
-}
-
-void showsJadwalkanPertandingan(addressList head, Queue *matchQueue, addressTree *tournamentTree) {
-    //panggil logika jadwalkan pertandingan
-}
-
-void showsInputResult(addressTree *tournamentTree, addressList head, Stack *matchHistory) {
-    //panggil logika input hasil pertandingan
-}
-
-void showsUndoResult(addressTree *tournamentTree, addressList head, Stack *matchHistory) {
-    //panggil logika undo hasil pertandingan
-}
-
-void showsBracket(addressTree tournamentTree, addressList head) {
-    //panggil modul bracket sesuai jumlah tim yang bertanding
-}
-
-void showsStatistik(addressList head) {
-    //panggil logika hitung statistik
 }
 
 void exitProgram(addressList *head, Queue *matchQueue, addressTree *tournamentTree, Stack *matchHistory) {
