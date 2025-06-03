@@ -5,19 +5,32 @@
 #ifndef LINKEDLIST_H
 #define LINKEDLIST_H
 
+#include "convention.h"
+
 typedef struct Node {
+    int id_tim; // ID unik untuk tim
     char namaTim[50];
     int laga;
     int kemenangan;
     int kekalahan;
     struct Node* next;
-} Node;
+} node;
 
-extern Node* head;
+typedef node* addressList;
 
-void initLinkedList();
-void addToLinkedList(char* namaTim);
-void removeFromLinkedList(int index);
-void displayLinkedList();
+void initLinkedList(addressList *head);
+void addToLinkedList(addressList *head, char* namaTim);
+void removeFromLinkedList(addressList *head, char* namaTim);
+void displayLinkedList(addressList head);
+
+addressList createNode(infotype info);
+void insertAtFirst(addressList *head, addressList newP);
+void insertAtLast(addressList *head, addressList newP);
+void DeAlokasi(addressList *head);
+void deleteFirst(addressList *head, infotype *info);
+void deleteValue(addressList *head, infotype info);
+int countNode(addressList head);
+void updateTeamStats(addressList head, char* namaTim, int menang, int kalah);
+addressList searchNodeById(addressList head, int id_tim);
 
 #endif
