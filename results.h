@@ -17,6 +17,8 @@ typedef struct {
 // Deklarasi fungsi 
 void tampilkanStatistik(StackNode* s, StackNode head);
 void saveHasilkeFile(StatistikTim tim[], int teamCount, const char* filename);
+void inputResult(addressTree *tournamentTree, addressList head, Stack *matchHistory);
+void undoResult(addressTree *tournamentTree, addressList head, Stack *matchHistory);
 
 #endif
 
