@@ -6,9 +6,7 @@ NIM : 241524039
 #ifndef STACK_H
 #define STACK_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
+#include "tree.h"
 
 // Struktur data buat nyimpen hasil pertandingan 
 

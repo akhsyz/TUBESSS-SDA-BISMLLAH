@@ -1,6 +1,8 @@
 #ifndef TEMPLATEBAGAN_H
 #define TEMPLATEBAGAN_H
 
+#include "results.h"
+
 void templatebagan4tim(char teams[][50], int scores[], char* winner);
 void templatebagan5tim(char teams[][50], int scores[], char* winner);
 void templatebagan6tim(char teams[][50], int scores[], char* winner);

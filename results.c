@@ -1,8 +1,4 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include "results.h"
-#include "stack.h"
 
 void tampilkanStatistik (Stack* s, StackNode* head) {
   StatistikTim tim[MAX_TIM];
