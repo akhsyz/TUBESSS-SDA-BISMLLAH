@@ -5,6 +5,38 @@ NIM : 241524039
 
 #include "stack.h"
 
+// Wrapper untuk membuat node Stack dari MatchResult
+static StackNode* createStackNode(MatchResult data) {
+  StackNode* newNode = (StackNode*)malloc(sizeof(StackNode));
+  if (newNode != NULL) {
+    newNode->data = data;
+    newNode->next = NULL;
+  }
+  return newNode;
+}
+
+// Wrapper untuk insertAtFirst agar kompatibel dengan StackNode
+static void insertAtFirstStack(Stack* s, StackNode newNode) {
+  if (newNode == NULL) return;
+  newNode->next = s->top;
+  s->top = newNode;
+  s->size++:
+}
+
+// Wrapper untuk deleteFirst agar kompatibel dengan StackNode
+static bool deleteFirstStack(Stack* s, MatchResult* result) {
+  if (s->top == NULL){
+    printf("Stack kosong kang/teh.\n");
+    return false;
+  }
+  StackNode* temp = s->top;
+  *result = temp->data;
+  s->top = temp->next;
+  free(temp);
+  s->size--;
+  return true;
+}
+
 // Inisialisasi stack
 void inisialisasiStack(Stack* s) {
   s->top = NULL;
@@ -18,34 +50,25 @@ bool apakahStackKosong(Stack* s) {
 
 // Tambah riwayat pertandingan ke stack
 void push (Stack* s, MatchResult data) {
-  StackNode* newNode = (StackNode*)malloc(sizeof(StackNode));
-  if (!newNode)
-  {
-    printf("Error: Gagal alokasi memori untuk StackNode\n");
+  StackNode* newNode = createStackNode(data);
+  if (newNode == NULL) {
+    printf("Gagal membuat node baru buat stack Kang/Teh.\n");
     return;
   }
-  newNode->data = data;
-  newNode->next = s->top;
-  s->top = newNode;
-  s->size++;
+  insertAtFirstStack(s, newNode); // Gunakan logika insert at first
 }
+
 
 // Hapus dan kembalikan pertandingan terakhir
 bool pop (Stack* s, MatchResult* result){
-  if (apakahStackKosong(s))
-  {
-    return false;
+  return deleteFirstStack(s, result); // Gunakan logika deleteFirst
   }
-  StackNode* temp = s->top;
-  *result = temp->data;
-  s->size--;
-  return true;
-}
+
 
 // Lihat pertandingan teratas tanpa menghapus 
 bool peek(Stack* s, MatchResult* result){
-  if (apakahStackKosong(s))
-  {
+  if (apakahStackKosong(s)) {
+    printf("Stack kosong Kang/Teh.\n");
     return false;
   }
   *result = s->top->data;
@@ -54,44 +77,14 @@ bool peek(Stack* s, MatchResult* result){
 
 // Kosongkan semua isi stack 
 void clearStack(Stack* s){
-  StackNode*s current = s->top;
-  while (current != NULL)
-  {
-    StackNode* temp = current;
-    current = current->next;
-    free(temp);
-  }
-  s->top = NULL;
+  MatchResult dummy;
+  while (pop(s, &dummy));
   s->size = 0;
 }
+
 
 // Mendapatkan ukuran stack
 int getStackSize(Stack* s){
   return s->size;
-}
-
-// Tampilkan riwayat pertandingan
-void tampilkanHistori(){
-  if (apakahStackKosong(s)){
-    printf("Riwayat pertandingan kosong.\n");
-    return;
-  }
-  printf("\nRiwayat Pertandingan:\n");
-  printf("------------------------------------------------------------\n");
-  printf("%-5s %-15s %-15s %-15s %-7s %-5s\n", 
-           "ID", "Tim 1", "Tim 2", "Pemenang", "Skor", "Babak");
-  printf("------------------------------------------------------------\n");
-  StackNode* current = s
-}
-
-// Batalkan pertandingan terakhir dan kembalikan tim ke Queue
-void undoMatch(Stack* s){
-  if (apakahStackKosong(s)){
-    printf("Tidak ada pertandingan untuk di-undo\n");
-    return;
-  }
-  MatchResult lastMatch = peek(s);
-  printf("Meng-undo pertandingan: %s vs %s\n", lastMatch.namaTim1, lastMatch.namaTim2);
-  pop(s);
 }
 
