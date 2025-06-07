@@ -10,28 +10,28 @@ void initQueue(Queue *Q) {
     Q->tail = NULL;
 }
 
-void enqueue(Queue *Q, addressList node) {
-    if (node == NULL) {
+void enqueue(Queue *Q, addressList teamNode) {
+    if (teamNode == NULL) {
         printf("Node tidak valid untuk enqueue.\n");
         return;
     }
-
-    insertAtLast(&(Q->head), node);
+    insertAtLast(&(Q->head), teamNode);
 
     if (Q->tail == NULL) {
-        Q->tail = node; 
+        Q->tail = teamNode;
     } else {
-        Q->tail = node; 
+        addressList temp = Q->head;
+        while (temp->next != NULL) temp = temp->next;
+        Q->tail = temp;
     }
 }
 
-void dequeue(Queue *Q, infotype *namaTim) {
+void dequeue(Queue *Q) {
     if (Q->head == NULL) {
         printf("Queue kosong.\n");
-        *namaTim = NULL;
         return;
     }
-    deleteFirst(&(Q->head), namaTim); 
+    deleteFirst(&(Q->head)); 
     if (Q->head == NULL) {
         Q->tail = NULL; 
     }

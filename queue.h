@@ -15,7 +15,7 @@ typedef struct {
 
 void initQueue(Queue *Q);
 void enqueue(Queue *Q, addressList node);
-void dequeue(Queue *Q, infotype *namaTim);
+void dequeue(Queue *Q);
 void reverseQueue(Queue *Q);
 
 #endif
