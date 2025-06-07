@@ -1,6 +1,6 @@
 /*
-PIC : belva 
-NIM : 241524035
+PIC: belva
+NIM: 241524035
 */
 
 #ifndef MENU_H
@@ -8,11 +8,10 @@ NIM : 241524035
 
 #include "fileio.h"
 
-void uiGreetings();
-void mainMenu();
-void showsTambahTim();
-void showsHapusTim();
-void showsDaftarTim();
-void exitProgram();
+void uiGreetings(char *namaEvent);
+void mainMenu(addressList *head, Queue *matchQueue, addressTree *tournamentTree, Stack *matchHistory, char *namaEvent);
+void showsTambahTim(addressList *head);
+void showsHapusTim(addressList *head);
+void exitProgram(addressList *head, Queue *matchQueue, addressTree *tournamentTree, Stack *matchHistory);
 
 #endif
