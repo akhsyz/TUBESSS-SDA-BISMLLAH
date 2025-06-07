@@ -1,67 +1,78 @@
 #include "results.h"
 
-void tampilkanStatistik (Stack* s, StackNode* head) {
-  StatistikTim tim[MAX_TIM];
-  int teamCount = 0;
-
-  // Inisialisasi array tim
-  for (int i = 0; i < MAX_TIM; i++)
-  {
-    tim[i].namaTim[0] = '\0';
-    tim[i].laga = 0;
-    tim[i].menang = 0;
-    tim[i].kalah = 0;
+void tampilkanStatistik (addressList head) {
+  if (head == NULL) {
+    printf("Daftar tim kosong.\n");
+    return;
   }
-
-  // Kumpulkan data dari linked list 
-  StackNode* current = head;
-  while (current != NULL && teamCount < MAX_TIM){
-    // Proses tim1
-    int foundTim1 = 0;
-    for (int i = 0; i < teamCount; i++) {
-      if (strcmp(tim[i].namaTim, current->data.namaTim1) == 0){
-        tim[i].laga++;
-        if (strcmp(current->data.namaTimPemenang, current->data.namaTim1) == 0) {
-          tim[i].menang++;
-        } else {
-          tim[i].kalah++;
-        }
-        foundTim1 = 1;
-        break;
-      }
+    printf("\n== Statistik Tim ==\n");
+    printf("----------------------------------------\n");
+    printf("%-20s %-10s %-10s %-10s\n", "Nama Tim", "Laga", "Menang", "Kalah");
+    printf("----------------------------------------\n");
+    addressList current = head;
+    while (current != NULL) {
+        printf("%-20s %-10d %-10d %-10d\n", current->namaTim, current->laga, current->kemenangan, current->kekalahan);
+        current = current->next;
     }
-    if (!foundTim1) {
-      strcpy(tim[teamCount].namaTim, current->data.namaTim1);
-      tim[teamCount].laga = 1;
-    } else {
-      tim[teamCount].kalah = 1;
-    }
-    teamCount++;
-  }
+    printf("----------------------------------------\n");
+}
 
-  // Proses tim2
-    int foundTim2 = 0;
-    for (int i = 0; i < teamCount; i++) {
-      if (strcmp(tim[i].namaTim, current->data.namaTim2) == 0){
-        tim[i].laga++;
-        if (strcmp(current->data.namaTimPemenang, current->data.namaTim2) == 0) {
-          tim[i].menang++;
-        } else {
-          tim[i].kalah++;
-        }
-        foundTim2 = 1;
-        break;
-      }
+void tampilkanHistori(Stack *s) {
+    if (apakahStackKosong(s)) { // Ganti isEmpty dengan apakahStackKosong
+        printf("Riwayat pertandingan kosong.\n");
+        return;
     }
-    if (!foundTim2) {
-      strcpy(tim[teamCount].namaTim, current->data.namaTim2);
-      tim[teamCount].laga = 1;
-    } else {
-      tim[teamCount].kalah = 1;
+    printf("\n== Riwayat Pertandingan ==\n");
+    printf("----------------------------------------\n");
+    StackNode *current = s->top;
+    while (current != NULL) {
+        printf("Match %d: Tim %d (%d) vs Tim %d (%d), Pemenang: Tim %d, Ronde: %d\n",
+               current->data.matchID, current->data.team1Id, current->data.skorTim1,
+               current->data.team2Id, current->data.skorTim2, current->data.idPemenang,
+               current->data.nomorRonde);
+        current = current->next;
     }
-    teamCount++;
-  }
+    printf("----------------------------------------\n");
+}
 
-  current = current->next
-
-  
+void inputMatchResult(addressTree *tournamentTree, addressList head, Stack *matchHistory) {
+    int match_id, id_pemenang, skor1, skor2;
+    printf("Masukkan ID pertandingan: ");
+    if (scanf("%d", &match_id) != 1 || match_id <= 0) {
+        printf("ID pertandingan tidak valid.\n");
+        while (getchar() != '\n'); // Bersihkan buffer
+        return;
+    }
+    addressTree matchNode = findMatchNode(*tournamentTree, match_id);
+    if (matchNode == NULL) {
+        printf("Pertandingan dengan ID %d tidak ditemukan.\n", match_id);
+        return;
+    }
+    printf("Tim %d vs Tim %d\n", matchNode->id_tim1, matchNode->id_tim2);
+    printf("Masukkan ID tim pemenang: ");
+    if (scanf("%d", &id_pemenang) != 1) {
+        printf("ID pemenang tidak valid.\n");
+        while (getchar() != '\n'); // Bersihkan buffer
+        return;
+    }
+    // Validasi pemenang, izinkan 0 untuk bye
+    if ((id_pemenang != matchNode->id_tim1 && id_pemenang != matchNode->id_tim2) &&
+        !(matchNode->id_tim1 == 0 || matchNode->id_tim2 == 0)) {
+        printf("ID pemenang tidak valid.\n");
+        return;
+    }
+    printf("Masukkan skor untuk Tim %d: ", matchNode->id_tim1);
+    if (scanf("%d", &skor1) != 1) {
+        printf("Skor tidak valid.\n");
+        while (getchar() != '\n'); // Bersihkan buffer
+        return;
+    }
+    printf("Masukkan skor untuk Tim %d: ", matchNode->id_tim2);
+    if (scanf("%d", &skor2) != 1) {
+        printf("Skor tidak valid.\n");
+        while (getchar() != '\n'); // Bersihkan buffer
+        return;
+    }
+    updateMatchResult(*tournamentTree, match_id, id_pemenang, skor1, skor2, head, matchHistory);
+    printf("Hasil pertandingan telah diperbarui.\n");
+}
