@@ -6,7 +6,7 @@ void uiGreetings(char *namaEvent) {
     printf("***********************************************************************************\n");
     printf("PLEASE ENTER YOUR EVENT NAME: ");
     scanf(" %[^\n]", namaEvent);
-    while (getchar() != '\n');
+    while (getchar() != '\n'); // Bersihkan buffer
     printf("\n***************************************************************\n");
     printf("*                                                             *\n");
     printf("*                    WELCOME TO %s                        *\n", namaEvent);
@@ -16,7 +16,7 @@ void uiGreetings(char *namaEvent) {
 
 void mainMenu(addressList *head, Queue *matchQueue, addressTree *tournamentTree, Stack *matchHistory, char *namaEvent) {
     int input = 0;
-    while (input != 11) {
+    while (input != 10) {
         printf("\n=== Manajemen Turnamen %s ===\n", namaEvent);
         printf("1. Tambah Tim\n");
         printf("2. Hapus Tim\n");
@@ -27,8 +27,7 @@ void mainMenu(addressList *head, Queue *matchQueue, addressTree *tournamentTree,
         printf("7. Tampilkan Bagan Pertandingan\n");
         printf("8. Tampilkan Statistik Tim\n");
         printf("9. Tampilkan Riwayat Pertandingan\n");
-        printf("10. Save Pertandingan\n");
-        printf("11. Keluar\n");
+        printf("10. Keluar\n");
         printf("Pilih Opsi: ");
         scanf("%d", &input);
         while (getchar() != '\n'); 
@@ -46,8 +45,8 @@ void mainMenu(addressList *head, Queue *matchQueue, addressTree *tournamentTree,
                 jadwalkanPertandingan(*head, matchQueue, tournamentTree);  
                 break;
             case 5:
-                printf("\n--- Input Hasil Pertandingan ---\n");
-                printf("Input hasil pertandingan.\n");
+                printf("\n=== Input Hasil Pertandingan ===\n");
+                printf("Input hasil pertandingan berikutnya.\n");
                 if (*tournamentTree == NULL) {
                     printf("Jadwalkan pertandingan terlebih dahulu!\n");
                 } else {
@@ -55,7 +54,7 @@ void mainMenu(addressList *head, Queue *matchQueue, addressTree *tournamentTree,
                 }
                 break;
             case 6:
-                printf("\n--- Undo Hasil Pertandingan ---\n");
+                printf("\n=== Undo Hasil Pertandingan ===\n");
                 printf("Undo hasil pertandingan terakhir.\n");
                 if (apakahStackKosong(matchHistory)) {
                     printf("Tidak ada hasil untuk di-undo!\n");
@@ -65,7 +64,7 @@ void mainMenu(addressList *head, Queue *matchQueue, addressTree *tournamentTree,
                 }
                 break;
             case 7:
-                printf("\n--- Bagan Pertandingan ---\n");
+                printf("\n=== Bagan Pertandingan ===\n");
                 printf("Menampilkan bagan pertandingan.\n");
                 if (*tournamentTree == NULL) {
                     printf("Jadwalkan pertandingan terlebih dahulu!\n");
@@ -90,31 +89,20 @@ void mainMenu(addressList *head, Queue *matchQueue, addressTree *tournamentTree,
                 }
                 break;
             case 8:
-                printf("\n--- Statistik Tim ---\n");
-                printf("Menampilkan statistik tim.\n");
                 tampilkanStatistik(*head);
                 break;
             case 9:
-                printf("\n--- Riwayat Pertandingan ---\n");
-                printf("Menampilkan riwayat pertandingan.\n");
-                tampilkanHistori(matchHistory);
+                tampilkanHistori(matchHistory, *head);
                 break;
             case 10:
-                printf("\n--- Save Pertandingan ---\n");
-                printf("Menyimpan detail turnamen ke file...\n");
-                saveTeamsToFile(*head, "teams.txt");
-                saveMatchHistoryToFile(matchHistory, "history.txt");
-                saveTournamentTreeToFile(*tournamentTree, "tournament.txt");
-                printf("Turnamen berhasil disimpan.\n");
-                break;
-            case 11:
-                printf("\n--- Keluar ---\n");
+                printf("\n=== Keluar ===\n");
                 printf("Menyimpan dan keluar dari program...\n");
-                exitProgram(head, matchQueue, tournamentTree, matchHistory);
+                exitProgram(head, matchQueue, tournamentTree, matchHistory, namaEvent);
                 return;
             default:
                 printf("Opsi tidak valid!\n");
         }
+        // Cek kondisi akhir turnamen
         if (*tournamentTree != NULL && (*tournamentTree)->id_pemenang != 0) {
             addressList winner = searchNodeById(*head, (*tournamentTree)->id_pemenang);
             if (winner != NULL) {
@@ -136,10 +124,14 @@ void showsHapusTim(addressList *head) {
     hapusTim(head); 
 }
 
-void exitProgram(addressList *head, Queue *matchQueue, addressTree *tournamentTree, Stack *matchHistory) {
-    saveTeamsToFile(*head, "teams.txt");
-    saveMatchHistoryToFile(matchHistory, "history.txt");
-    saveTournamentTreeToFile(*tournamentTree, "tournament.txt");
+void exitProgram(addressList *head, Queue *matchQueue, addressTree *tournamentTree, Stack *matchHistory, char *namaEvent) {
+    char fname[100];
+    snprintf(fname, sizeof(fname), "%s_teams.txt", namaEvent);
+    saveTeamsToFile(*head, fname);
+    snprintf(fname, sizeof(fname), "%s_history.txt", namaEvent);
+    saveMatchHistoryToFile(matchHistory, fname);
+    snprintf(fname, sizeof(fname), "%s_tournament.txt", namaEvent);
+    saveTournamentTreeToFile(*tournamentTree, fname);
     DeAlokasi(head); 
     while (matchQueue->head != NULL) {
         dequeue(matchQueue);

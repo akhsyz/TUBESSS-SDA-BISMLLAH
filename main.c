@@ -2,8 +2,8 @@
 
 // Fungsi UI awal sebelum uiGreetings
 void initialUI(addressList *head, Queue *matchQueue, addressTree *tournamentTree, Stack *matchHistory, char *namaEvent) {
-    (void)matchQueue; // Suppress unused parameter warning
     int opsi = 0;
+    char fname[100];
     while (1) {
         printf("============================================\n");
         printf("      WELCOME TO THIS APPLICATION\n");
@@ -18,23 +18,28 @@ void initialUI(addressList *head, Queue *matchQueue, addressTree *tournamentTree
         }
         while (getchar() != '\n');
         if (opsi == 1) {
-            // Load data dari file
-            *head = loadTeamsFromFile("teams.txt");
-            Stack* loadedHistory = loadMatchHistoryFromFile("history.txt");
-            if (loadedHistory != NULL) {
-                *matchHistory = *loadedHistory;
-                free(loadedHistory);
-            }
-            *tournamentTree = loadTournamentTreeFromFile("tournament.txt");
-            // Minta nama event
             printf("Masukkan nama event turnamen yang ingin diload: ");
             scanf(" %[^\n]", namaEvent);
             while (getchar() != '\n');
+            // Compose filenames based on event name
+            snprintf(fname, sizeof(fname), "%s_teams.txt", namaEvent);
+            *head = loadTeamsFromFile(fname);
+            snprintf(fname, sizeof(fname), "%s_history.txt", namaEvent);
+            Stack* loadedHistory = loadMatchHistoryFromFile(fname);
+            if (loadedHistory != NULL) {
+                *matchHistory = *loadedHistory;
+                free(loadedHistory);
+            } else {
+                inisialisasiStack(matchHistory);
+            }
+            snprintf(fname, sizeof(fname), "%s_tournament.txt", namaEvent);
+            *tournamentTree = loadTournamentTreeFromFile(fname);
             printf("Turnamen berhasil dimuat. Selamat datang kembali di %s!\n", namaEvent);
+            mainMenu(head, matchQueue, tournamentTree, matchHistory, namaEvent);
             break;
         } else if (opsi == 2) {
-            // Lanjut ke uiGreetings (akan minta nama event baru)
             uiGreetings(namaEvent);
+            mainMenu(head, matchQueue, tournamentTree, matchHistory, namaEvent);
             break;
         } else {
             printf("Opsi tidak valid!\n");
@@ -56,9 +61,6 @@ int main() {
 
     // Tampilkan UI awal
     initialUI(&head, &matchQueue, &tournamentTree, &matchHistory, namaEvent);
-
-    // Masuk ke menu utama
-    mainMenu(&head, &matchQueue, &tournamentTree, &matchHistory, namaEvent);
 
     return 0;
 }
