@@ -16,11 +16,11 @@ static StackNode* createStackNode(MatchResult data) {
 }
 
 // Wrapper untuk insertAtFirst agar kompatibel dengan StackNode
-static void insertAtFirstStack(Stack* s, StackNode newNode) {
+static void insertAtFirstStack(Stack* s, StackNode* newNode) {
   if (newNode == NULL) return;
   newNode->next = s->top;
   s->top = newNode;
-  s->size++:
+  s->size++;
 }
 
 // Wrapper untuk deleteFirst agar kompatibel dengan StackNode
