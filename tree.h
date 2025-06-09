@@ -1,20 +1,24 @@
-#ifndef TREE_H
-#define TREE_H
+#ifndef BTREE_H
+#define BTREE_H
 
 #include "queue.h"
 
 typedef struct NodeTree {
-    int id_tim1; // ID tim pertama (0 jika BYE)
-    int id_tim2; // ID tim kedua (0 jika BYE)
-    int id_pemenang; // ID pemenang (diisi setelah pertandingan)
-    int match_id; // ID pertandingan (seed)
+    int id_tim1;       
+    int id_tim2;        
+    int id_pemenang;    
+    int match_id;      
     struct NodeTree* left;
     struct NodeTree* right;
 } NodeTree;
 
 typedef NodeTree* addressTree;
 
-void initTree();
-void generateTournamentTree(int teamCount, char teams[][50], int scores[], char* winner);
+addressTree createTreeNode(int id_tim1, int id_tim2, int match_id);
+addressTree buildTournamentTree(Queue *Q, int total_teams, addressList head);
+addressTree findMatchNode(addressTree root, int match_id);
+addressTree findParentNode(addressTree root, addressTree node);
+int calculateRoundNumber(addressTree root, int match_id, addressList head);
+void clearTree(addressTree *root);
 
 #endif
