@@ -1,564 +1,432 @@
 #include "templatebagan.h"
 
-void templatebagan4tim(char teams[][50], int scores[], char* winner) {
-    printf("BIGETRON : %d\n", scores[0]);
-    printf("\t\t|--> BIGETRON : %d\n", scores[0]);
-    printf("ONIC     : %d\n", scores[1]);
-    printf("\t\t\t\t|--> %s\n", winner);
-    printf("AEROWOLF : %d\n", scores[2]);
-    printf("\t\t|--> RRQ      : %d\n", scores[3]);
-    printf("RRQ      : %d\n\n", scores[3]);
-
-    printf("TIM 1 : %s\n", teams[0]);
-    printf("TIM 2 : %s\n", teams[1]);
-    printf("TIM 3 : %s\n", teams[2]);
-    printf("TIM 4 : %s\n", teams[3]);
-
-    printf("Pertandingan 1 : %s vs %s\n", teams[0], teams[1]);
-    printf("Pertandingan 2 : %s vs %s\n", teams[2], teams[3]);
-    printf("Pertandingan 3 : %s vs %s\n", winner, teams[3]);
-    printf("Winner : %s\n", winner);
+static void getTeamName(int id_tim, addressList head, char *output) {
+    addressList team = searchNodeById(head, id_tim);
+    if (team == NULL || id_tim == 0) {
+        strncpy(output, "BYE", 8);
+        output[8] = '\0';
+    } else {
+        strncpy(output, team->namaTim, 8);
+        output[8] = '\0';
+    }
 }
 
-void templatebagan5tim(char teams[][50], int scores[], char* winner) {
-    printf("BIGETRON : %d\n", scores[0]);
-    printf("\t\t|--> BIGETRON : %d\n", scores[0]);
-    printf("ONIC     : %d\n", scores[1]);
-    printf("\t\t\t    |--> BIGETRON : %d\n", scores[0]);
-    printf("\t\t     AEROWOLF : %d\n", scores[2]);
-    printf("\t\t\t\t\t\t|--> %s\n", winner);
-    printf("\t\t     RRQ      : %d\n", scores[3]);
-    printf("\t\t\t    |--> RRQ      : %d\n", scores[3]);
-    printf("\t\t     EVOS     : %d\n", scores[4]);
-
-    printf("TIM 1 : %s\n", teams[0]);
-    printf("TIM 2 : %s\n", teams[1]);
-    printf("TIM 3 : %s\n", teams[2]);
-    printf("TIM 4 : %s\n", teams[3]);
-    printf("TIM 5 : %s\n", teams[4]);
-
-    printf("Pertandingan 1 : %s vs %s\n", teams[0], teams[1]);
-    printf("Pertandingan 2 : %s vs %s\n", teams[0], teams[2]);
-    printf("Pertandingan 3 : %s vs %s\n", teams[3], teams[4]);
-    printf("Pertandingan 4 : %s vs %s\n", teams[0], teams[3]);
-    printf("Winner : %s\n", winner);
+static void getMatchScore(int match_id, Stack *history, int *skor1, int *skor2) {
+    *skor1 = 0;
+    *skor2 = 0;
+    StackNode *current = history->top;
+    while (current != NULL) {
+        if (current->data.matchID == match_id) {
+            *skor1 = current->data.skorTim1;
+            *skor2 = current->data.skorTim2;
+            break;
+        }
+        current = current->next;
+    }
 }
 
-void templatebagan6tim(char teams[][50], int scores[], char* winner) {
-    printf("BIGETRON : %d\n", scores[0]);
-    printf("\t\t|--> BIGETRON : %d\n", scores[0]);
-    printf("ONIC     : %d\n", scores[1]);
-    printf("\t\t\t    |--> BIGETRON : %d\n", scores[0]);
-    printf("\t\t     EVOS     : %d\n", scores[4]);
-    printf("AEROWOLF : %d\n", scores[2]);
-    printf("\t\t\t\t\t\t|--> %s\n", winner);
-    printf("\t\t|--> RRQ      : %d\n", scores[3]);
-    printf("RRQ      : %d\n", scores[3]);
-    printf("\t\t\t    |--> BOOM     : %d\n", scores[5]);
-    printf("\t\t     BOOM     : %d\n", scores[5]);
+void templatebagan4tim(addressTree root, addressList head, Stack *history) {
+    if (root == NULL || root->left == NULL || root->right == NULL) {
+        printf("Pohon turnamen kosong atau tidak valid.\n");
+        return;
+    }
+    char name1[9], name2[9], name3[9], name4[9], winner[9];
+    int skor1, skor2, skor3, skor4, skor5, skor6;
+    getTeamName(root->left->id_tim1, head, name1);
+    getTeamName(root->left->id_tim2, head, name2);
+    getTeamName(root->right->id_tim1, head, name3);
+    getTeamName(root->right->id_tim2, head, name4);
+    getTeamName(root->id_pemenang, head, winner);
+    getMatchScore(root->left->match_id, history, &skor1, &skor2);
+    getMatchScore(root->right->match_id, history, &skor3, &skor4);
+    getMatchScore(root->match_id, history, &skor5, &skor6);
 
-    printf("TIM 1 : %s\n", teams[0]);
-    printf("TIM 2 : %s\n", teams[1]);
-    printf("TIM 3 : %s\n", teams[2]);
-    printf("TIM 4 : %s\n", teams[3]);
-    printf("TIM 5 : %s\n", teams[4]);
-    printf("TIM 6 : %s\n", teams[5]);
-
-    printf("Pertandingan 1 : %s vs %s\n", teams[0], teams[1]);
-    printf("Pertandingan 2 : %s vs %s\n", teams[2], teams[3]);
-    printf("Pertandingan 3 : %s vs %s\n", teams[0], teams[4]);
-    printf("Pertandingan 4 : %s vs %s\n", teams[3], teams[5]);
-    printf("Pertandingan 5 : %s vs %s\n", teams[0], teams[5]);
-    printf("Winner : %s\n", winner);
+    printf("\033[1;33m\n"); // Yellow bold
+    printf("%-8s : %d\n", name1, skor1);
+    printf("        |--> %-8s : %d\n", name1, skor5);
+    printf("%-8s : %d\n", name2, skor2);
+    printf("                    |--> %-8s\n", winner);
+    printf("%-8s : %d\n", name3, skor3);
+    printf("        |--> %-8s : %d\n", name4, skor6);
+    printf("%-8s : %d\n", name4, skor4);
+    printf("Winner : %-8s\n\n", winner);
+    printf("\033[0m");
 }
 
-void templatebagan7tim(char teams[][50], int scores[], char* winner) {
-    printf("BIGETRON : %d\n", scores[0]);
-    printf("\t\t|--> BIGETRON : %d\n", scores[0]);
-    printf("ONIC     : %d\n", scores[1]);
-    printf("\t\t\t    |--> BIGETRON : %d\n", scores[0]);
-    printf("\t\t     AURA     : %d\n", scores[6]);
-    printf("AEROWOLF : %d\n", scores[2]);
-    printf("\t\t\t\t\t\t|--> %s\n", winner);
-    printf("\t\t|--> RRQ      : %d\n", scores[3]);
-    printf("RRQ      : %d\n", scores[3]);
-    printf("\t\t\t    |--> RRQ      : %d\n", scores[3]);
-    printf("EVOS     : %d\n", scores[4]);
-    printf("\t\t|--> BOOM     : %d\n", scores[5]);
-    printf("BOOM     : %d\n", scores[5]);
+void templatebagan5tim(addressTree root, addressList head, Stack *history) {
+    if (root == NULL || root->left == NULL || root->right == NULL || root->left->left == NULL) {
+        printf("Pohon turnamen kosong atau tidak valid.\n");
+        return;
+    }
+    char name1[9], name2[9], name3[9], name4[9], name5[9], winner[9];
+    int skor1, skor2, skor3, skor4, skor5, skor6, skor7, skor8;
+    getTeamName(root->left->left->id_tim1, head, name1);
+    getTeamName(root->left->left->id_tim2, head, name2);
+    getTeamName(root->left->id_tim2, head, name3);
+    getTeamName(root->right->id_tim1, head, name4);
+    getTeamName(root->right->id_tim2, head, name5);
+    getTeamName(root->id_pemenang, head, winner);
+    getMatchScore(root->left->left->match_id, history, &skor1, &skor2);
+    getMatchScore(root->left->match_id, history, &skor3, &skor4);
+    getMatchScore(root->right->match_id, history, &skor5, &skor6);
+    getMatchScore(root->match_id, history, &skor7, &skor8);
 
-    printf("TIM 1 : %s\n", teams[0]);
-    printf("TIM 2 : %s\n", teams[1]);
-    printf("TIM 3 : %s\n", teams[2]);
-    printf("TIM 4 : %s\n", teams[3]);
-    printf("TIM 5 : %s\n", teams[4]);
-    printf("TIM 6 : %s\n", teams[5]);
-    printf("TIM 7 : %s\n", teams[6]);
-
-    printf("Pertandingan 1 : %s vs %s\n", teams[0], teams[1]);
-    printf("Pertandingan 2 : %s vs %s\n", teams[2], teams[3]);
-    printf("Pertandingan 3 : %s vs %s\n", teams[4], teams[5]);
-    printf("Pertandingan 4 : %s vs %s\n", teams[0], teams[6]);
-    printf("Pertandingan 5 : %s vs %s\n", teams[3], teams[5]);
-    printf("Pertandingan 6 : %s vs %s\n", teams[0], teams[3]);
-    printf("Winner : %s\n", winner);
+    printf("\n");
+    printf("%-8s : %d\n", name1, skor1);
+    printf("        |--> %-8s : %d\n", name1, skor3);
+    printf("%-8s : %d\n", name2, skor2);
+    printf("                    |--> %-8s : %d\n", winner, skor7);
+    printf("%-8s : %d\n", name3, skor4);
+    printf("%-8s : %d\n", name4, skor5);
+    printf("        |--> %-8s : %d\n", name4, skor6);
+    printf("%-8s : %d\n", name5, skor6);
+    printf("Winner : %-8s\n\n", winner);
 }
 
-void templatebagan8tim(char teams[][50], int scores[], char* winner) {
-    printf("BIGETRON : %d\n", scores[0]);
-    printf("\t\t|--> BIGETRON : %d\n", scores[0]);
-    printf("ONIC     : %d\n", scores[1]);
-    printf("\t\t\t\t    |--> BIGETRON : %d\n", scores[0]);
-    printf("AEROWOLF : %d\n", scores[2]);
-    printf("\t\t|--> AEROWOLF : %d\n", scores[2]);
-    printf("RRQ      : %d\n", scores[3]);
-    printf("\t\t\t\t\t\t    |--> %s\n", winner);
-    printf("EVOS     : %d\n", scores[4]);
-    printf("\t\t|--> EVOS     : %d\n", scores[4]);
-    printf("BOOM     : %d\n", scores[5]);
-    printf("\t\t\t\t    |--> EVOS     : %d\n", scores[4]);
-    printf("AURA     : %d\n", scores[6]);
-    printf("\t\t|--> GEEKFAM  : %d\n", scores[7]);
-    printf("GEEKFAM  : %d\n", scores[7]);
+void templatebagan6tim(addressTree root, addressList head, Stack *history) {
+    if (root == NULL || root->left == NULL || root->right == NULL || root->left->left == NULL || root->right->left == NULL) {
+        printf("Pohon turnamen kosong atau tidak valid.\n");
+        return;
+    }
+    char name1[9], name2[9], name3[9], name4[9], name5[9], name6[9], winner[9];
+    int skor1, skor2, skor3, skor4, skor5, skor6, skor7, skor8, skor9, skor10;
+    getTeamName(root->left->left->id_tim1, head, name1);
+    getTeamName(root->left->left->id_tim2, head, name2);
+    getTeamName(root->left->id_tim2, head, name5);
+    getTeamName(root->right->left->id_tim1, head, name3);
+    getTeamName(root->right->left->id_tim2, head, name4);
+    getTeamName(root->right->id_tim2, head, name6);
+    getTeamName(root->id_pemenang, head, winner);
+    getMatchScore(root->left->left->match_id, history, &skor1, &skor2);
+    getMatchScore(root->left->match_id, history, &skor5, &skor6);
+    getMatchScore(root->right->left->match_id, history, &skor3, &skor4);
+    getMatchScore(root->right->match_id, history, &skor7, &skor8);
+    getMatchScore(root->match_id, history, &skor9, &skor10);
 
-    printf("TIM 1 : %s\n", teams[0]);
-    printf("TIM 2 : %s\n", teams[1]);
-    printf("TIM 3 : %s\n", teams[2]);
-    printf("TIM 4 : %s\n", teams[3]);
-    printf("TIM 5 : %s\n", teams[4]);
-    printf("TIM 6 : %s\n", teams[5]);
-    printf("TIM 7 : %s\n", teams[6]);
-    printf("TIM 8 : %s\n", teams[7]);
-
-    printf("Pertandingan 1 : %s vs %s\n", teams[0], teams[1]);
-    printf("Pertandingan 2 : %s vs %s\n", teams[2], teams[3]);
-    printf("Pertandingan 3 : %s vs %s\n", teams[4], teams[5]);
-    printf("Pertandingan 4 : %s vs %s\n", teams[6], teams[7]);
-    printf("Pertandingan 5 : %s vs %s\n", teams[0], teams[2]);
-    printf("Pertandingan 6 : %s vs %s\n", teams[4], teams[7]);
-    printf("Pertandingan 7 : %s vs %s\n", teams[0], teams[4]);
-    printf("Winner : %s\n", winner);
+    printf("\n");
+    printf("%-8s : %d\n", name1, skor1);
+    printf("        |--> %-8s : %d\n", name1, skor5);
+    printf("%-8s : %d\n", name2, skor2);
+    printf("                    |--> %-8s : %d\n", winner, skor9);
+    printf("%-8s : %d\n", name5, skor6);
+    printf("%-8s : %d\n", name3, skor3);
+    printf("        |--> %-8s : %d\n", name4, skor7);
+    printf("%-8s : %d\n", name4, skor4);
+    printf("                    |--> %-8s : %d\n", name6, skor8);
+    printf("%-8s : %d\n", name6, skor8);
+    printf("Winner : %-8s\n\n", winner);
 }
 
-void templatebagan9tim(char teams[][50], int scores[], char* winner) {
-    printf("BIGETRON : %d\n", scores[0]);
-    printf("\t\t|--> BIGETRON : %d\n", scores[0]);
-    printf("ONIC     : %d\n", scores[1]);
-    printf("\t\t\t    |--> BIGETRON : %d\n", scores[0]);
-    printf("\t\t     AEROWOLF : %d\n", scores[2]);
-    printf("\t\t\t\t\t\t|--> %s\n", winner);
-    printf("\t\t     RRQ      : %d\n", scores[3]);
-    printf("\t\t\t    |--> EVOS     : %d\n", scores[4]);
-    printf("\t\t     EVOS     : %d\n", scores[4]);
-    printf("\t\t\t\t\t\t    |--> BIGETRON\n");
-    printf("\t\t     BOOM     : %d\n", scores[5]);
-    printf("\t\t\t    |--> AURA     : %d\n", scores[6]);
-    printf("\t\t     AURA     : %d\n", scores[6]);
-    printf("\t\t\t\t\t\t    |--> GEEKFAM  : %d\n");
-    printf("\t\t     GEEKFAM  : %d\n", scores[7]);
-    printf("\t\t\t    |--> GEEKFAM  : %d\n", scores[7]);
-    printf("\t\t     ALTEREGO : %d\n", scores[8]);
+void templatebagan7tim(addressTree root, addressList head, Stack *history) {
+    if (root == NULL || root->left == NULL || root->right == NULL || root->left->left == NULL || root->right->left == NULL || root->right->right == NULL) {
+        printf("Pohon turnamen kosong atau tidak valid.\n");
+        return;
+    }
+    char name1[9], name2[9], name3[9], name4[9], name5[9], name6[9], name7[9], winner[9];
+    int skor1, skor2, skor3, skor4, skor5, skor6, skor7, skor8, skor9, skor10;
+    getTeamName(root->left->left->id_tim1, head, name1);
+    getTeamName(root->left->left->id_tim2, head, name2);
+    getTeamName(root->left->id_tim2, head, name7);
+    getTeamName(root->right->left->id_tim1, head, name3);
+    getTeamName(root->right->left->id_tim2, head, name4);
+    getTeamName(root->right->right->id_tim1, head, name5);
+    getTeamName(root->right->right->id_tim2, head, name6);
+    getTeamName(root->id_pemenang, head, winner);
+    getMatchScore(root->left->left->match_id, history, &skor1, &skor2);
+    getMatchScore(root->left->match_id, history, &skor7, &skor8);
+    getMatchScore(root->right->left->match_id, history, &skor3, &skor4);
+    getMatchScore(root->right->right->match_id, history, &skor5, &skor6);
+    getMatchScore(root->match_id, history, &skor9, &skor10);
 
-    printf("TIM 1 : %s\n", teams[0]);
-    printf("TIM 2 : %s\n", teams[1]);
-    printf("TIM 3 : %s\n", teams[2]);
-    printf("TIM 4 : %s\n", teams[3]);
-    printf("TIM 5 : %s\n", teams[4]);
-    printf("TIM 6 : %s\n", teams[5]);
-    printf("TIM 7 : %s\n", teams[6]);
-    printf("TIM 8 : %s\n", teams[7]);
-    printf("TIM 9 : %s\n", teams[8]);
-
-    printf("Pertandingan 1 : %s vs %s\n", teams[0], teams[1]);
-    printf("Pertandingan 2 : %s vs %s\n", teams[0], teams[2]);
-    printf("Pertandingan 3 : %s vs %s\n", teams[3], teams[4]);
-    printf("Pertandingan 4 : %s vs %s\n", teams[5], teams[6]);
-    printf("Pertandingan 5 : %s vs %s\n", teams[7], teams[8]);
-    printf("Pertandingan 6 : %s vs %s\n", teams[0], teams[4]);
-    printf("Pertandingan 7 : %s vs %s\n", teams[6], teams[7]);
-    printf("Pertandingan 8 : %s vs %s\n", teams[0], teams[7]);
-    printf("Winner : %s\n", winner);
+    printf("\n");
+    printf("%-8s : %d\n", name1, skor1);
+    printf("        |--> %-8s : %d\n", name1, skor7);
+    printf("%-8s : %d\n", name2, skor2);
+    printf("                    |--> %-8s : %d\n", winner, skor9);
+    printf("%-8s : %d\n", name7, skor8);
+    printf("%-8s : %d\n", name3, skor3);
+    printf("        |--> %-8s : %d\n", name4, skor9);
+    printf("%-8s : %d\n", name4, skor4);
+    printf("%-8s : %d\n", name5, skor5);
+    printf("        |--> %-8s : %d\n", name6, skor10);
+    printf("%-8s : %d\n", name6, skor6);
+    printf("Winner : %-8s\n\n", winner);
 }
 
-void templatebagan10tim(char teams[][50], int scores[], char* winner) {
-    printf("BIGETRON : %d\n", scores[0]);
-    printf("\t\t|--> BIGETRON : %d\n", scores[0]);
-    printf("ONIC     : %d\n", scores[1]);
-    printf("\t\t\t    |--> BIGETRON : %d\n", scores[0]);
-    printf("\t\t     EVOS     : %d\n", scores[4]);
-    printf("\t\t\t\t\t\t|--> %s\n", winner);
-    printf("\t\t     BOOM     : %d\n", scores[5]);
-    printf("\t\t\t    |--> AURA     : %d\n", scores[6]);
-    printf("\t\t     AURA     : %d\n", scores[6]);
-    printf("AEROWOLF : %d\n", scores[2]);
-    printf("\t\t\t\t\t\t    |--> BIGETRON\n");
-    printf("\t\t|--> AEROWOLF : %d\n", scores[2]);
-    printf("RRQ      : %d\n", scores[3]);
-    printf("\t\t\t    |--> AEROWOLF : %d\n", scores[2]);
-    printf("\t\t     GEEKFAM  : %d\n", scores[7]);
-    printf("\t\t\t\t\t\t    |--> SIREN    : %d\n");
-    printf("\t\t     ALTEREGO : %d\n", scores[8]);
-    printf("\t\t\t    |--> SIREN    : %d\n", scores[9]);
-    printf("\t\t     SIREN    : %d\n", scores[9]);
+void templatebagan8tim(addressTree root, addressList head, Stack *history) {
+    if (root == NULL || root->left == NULL || root->right == NULL || root->left->left == NULL || root->left->right == NULL || root->right->left == NULL || root->right->right == NULL) {
+        printf("Pohon turnamen kosong atau tidak valid.\n");
+        return;
+    }
+    char name1[9], name2[9], name3[9], name4[9], name5[9], name6[9], name7[9], name8[9], winner[9];
+    int skor1, skor2, skor3, skor4, skor5, skor6, skor7, skor8, skor9, skor10, skor11, skor12, skor13, skor14;
+    getTeamName(root->left->left->id_tim1, head, name1);
+    getTeamName(root->left->left->id_tim2, head, name2);
+    getTeamName(root->left->right->id_tim1, head, name3);
+    getTeamName(root->left->right->id_tim2, head, name4);
+    getTeamName(root->right->left->id_tim1, head, name5);
+    getTeamName(root->right->left->id_tim2, head, name6);
+    getTeamName(root->right->right->id_tim1, head, name7);
+    getTeamName(root->right->right->id_tim2, head, name8);
+    getTeamName(root->id_pemenang, head, winner);
+    getMatchScore(root->left->left->match_id, history, &skor1, &skor2);
+    getMatchScore(root->left->right->match_id, history, &skor3, &skor4);
+    getMatchScore(root->right->left->match_id, history, &skor5, &skor6);
+    getMatchScore(root->right->right->match_id, history, &skor7, &skor8);
+    getMatchScore(root->left->match_id, history, &skor9, &skor10);
+    getMatchScore(root->right->match_id, history, &skor11, &skor12);
+    getMatchScore(root->match_id, history, &skor13, &skor14);
 
-    printf("TIM 1 : %s\n", teams[0]);
-    printf("TIM 2 : %s\n", teams[1]);
-    printf("TIM 3 : %s\n", teams[2]);
-    printf("TIM 4 : %s\n", teams[3]);
-    printf("TIM 5 : %s\n", teams[4]);
-    printf("TIM 6 : %s\n", teams[5]);
-    printf("TIM 7 : %s\n", teams[6]);
-    printf("TIM 8 : %s\n", teams[7]);
-    printf("TIM 9 : %s\n", teams[8]);
-    printf("TIM 10 : %s\n", teams[9]);
-
-    printf("Pertandingan 1 : %s vs %s\n", teams[0], teams[1]);
-    printf("Pertandingan 2 : %s vs %s\n", teams[2], teams[3]);
-    printf("Pertandingan 3 : %s vs %s\n", teams[0], teams[4]);
-    printf("Pertandingan 4 : %s vs %s\n", teams[5], teams[6]);
-    printf("Pertandingan 5 : %s vs %s\n", teams[2], teams[7]);
-    printf("Pertandingan 6 : %s vs %s\n", teams[8], teams[9]);
-    printf("Pertandingan 7 : %s vs %s\n", teams[0], teams[6]);
-    printf("Pertandingan 8 : %s vs %s\n", teams[2], teams[9]);
-    printf("Pertandingan 9 : %s vs %s\n", teams[0], teams[9]);
-    printf("Winner : %s\n", winner);
+    printf("\n");
+    printf("%-8s : %d\n", name1, skor1);
+    printf("        |--> %-8s : %d\n", name1, skor9);
+    printf("%-8s : %d\n", name2, skor2);
+    printf("                    |--> %-8s : %d\n", winner, skor13);
+    printf("%-8s : %d\n", name3, skor3);
+    printf("        |--> %-8s : %d\n", name3, skor10);
+    printf("%-8s : %d\n", name4, skor4);
+    printf("%-8s : %d\n", name5, skor5);
+    printf("        |--> %-8s : %d\n", name5, skor11);
+    printf("%-8s : %d\n", name6, skor6);
+    printf("                    |--> %-8s : %d\n", name5, skor12);
+    printf("%-8s : %d\n", name7, skor7);
+    printf("        |--> %-8s : %d\n", name8, skor8);
+    printf("%-8s : %d\n", name8, skor8);
+    printf("Winner : %-8s\n\n", winner);
 }
 
-void templatebagan11tim(char teams[][50], int scores[], char* winner) {
-    printf("BIGETRON : %d\n", scores[0]);
-    printf("\t\t|--> BIGETRON : %d\n", scores[0]);
-    printf("ONIC     : %d\n", scores[1]);
-    printf("\t\t\t    |--> BIGETRON : %d\n", scores[0]);
-    printf("\t\t     AURA     : %d\n", scores[6]);
-    printf("\t\t\t\t\t\t|--> %s\n", winner);
-    printf("\t\t     GEEKFAM  : %d\n", scores[7]);
-    printf("\t\t\t    |--> GEEKFAM  : %d\n", scores[7]);
-    printf("\t\t     ALTEREGO : %d\n", scores[8]);
-    printf("AEROWOLF : %d\n", scores[2]);
-    printf("\t\t\t\t\t\t    |--> BIGETRON\n");
-    printf("\t\t|--> AEROWOLF : %d\n", scores[2]);
-    printf("RRQ      : %d\n", scores[3]);
-    printf("\t\t\t    |--> AEROWOLF : %d\n", scores[2]);
-    printf("\t\t     SIREN    : %d\n", scores[9]);
-    printf("EVOS     : %d\n", scores[4]);
-    printf("\t\t\t\t\t\t    |--> HFX      : %d\n");
-    printf("\t\t|--> EVOS     : %d\n", scores[4]);
-    printf("BOOM     : %d\n", scores[5]);
-    printf("\t\t\t    |--> HFX      : %d\n", scores[10]);
-    printf("\t\t     HFX      : %d\n", scores[10]);
+void templatebagan9tim(addressTree root, addressList head, Stack *history) {
+    if (root == NULL || root->left == NULL || root->right == NULL || root->left->left == NULL || root->left->right == NULL || root->right->left == NULL || root->right->right == NULL) {
+        printf("Pohon turnamen kosong atau tidak valid.\n");
+        return;
+    }
+    char name1[9], name2[9], name3[9], name4[9], name5[9], name6[9], name7[9], name8[9], name9[9], winner[9];
+    int skor1, skor2, skor3, skor4, skor5, skor6, skor7, skor8, skor9, skor10, skor11, skor12, skor13, skor14, skor15, skor16;
+    getTeamName(root->left->left->left->id_tim1, head, name1);
+    getTeamName(root->left->left->left->id_tim2, head, name2);
+    getTeamName(root->left->left->id_tim2, head, name3);
+    getTeamName(root->left->right->id_tim1, head, name4);
+    getTeamName(root->left->right->id_tim2, head, name5);
+    getTeamName(root->right->left->id_tim1, head, name6);
+    getTeamName(root->right->left->id_tim2, head, name7);
+    getTeamName(root->right->right->id_tim1, head, name8);
+    getTeamName(root->right->right->id_tim2, head, name9);
+    getTeamName(root->id_pemenang, head, winner);
+    getMatchScore(root->left->left->left->match_id, history, &skor1, &skor2);
+    getMatchScore(root->left->left->match_id, history, &skor3, &skor4);
+    getMatchScore(root->left->right->match_id, history, &skor5, &skor6);
+    getMatchScore(root->right->left->match_id, history, &skor7, &skor8);
+    getMatchScore(root->right->right->match_id, history, &skor9, &skor10);
+    getMatchScore(root->left->match_id, history, &skor11, &skor12);
+    getMatchScore(root->right->match_id, history, &skor13, &skor14);
+    getMatchScore(root->match_id, history, &skor15, &skor16);
 
-    printf("TIM 1 : %s\n", teams[0]);
-    printf("TIM 2 : %s\n", teams[1]);
-    printf("TIM 3 : %s\n", teams[2]);
-    printf("TIM 4 : %s\n", teams[3]);
-    printf("TIM 5 : %s\n", teams[4]);
-    printf("TIM 6 : %s\n", teams[5]);
-    printf("TIM 7 : %s\n", teams[6]);
-    printf("TIM 8 : %s\n", teams[7]);
-    printf("TIM 9 : %s\n", teams[8]);
-    printf("TIM 10 : %s\n", teams[9]);
-    printf("TIM 11 : %s\n", teams[10]);
-
-    printf("Pertandingan 1 : %s vs %s\n", teams[0], teams[1]);
-    printf("Pertandingan 2 : %s vs %s\n", teams[2], teams[3]);
-    printf("Pertandingan 3 : %s vs %s\n", teams[4], teams[5]);
-    printf("Pertandingan 4 : %s vs %s\n", teams[0], teams[6]);
-    printf("Pertandingan 5 : %s vs %s\n", teams[7], teams[8]);
-    printf("Pertandingan 6 : %s vs %s\n", teams[2], teams[9]);
-    printf("Pertandingan 7 : %s vs %s\n", teams[4], teams[10]);
-    printf("Pertandingan 8 : %s vs %s\n", teams[0], teams[7]);
-    printf("Pertandingan 9 : %s vs %s\n", teams[2], teams[10]);
-    printf("Winner : %s\n", winner);
+    printf("\n");
+    printf("%-8s : %d\n", name1, skor1);
+    printf("        |--> %-8s : %d\n", name1, skor3);
+    printf("%-8s : %d\n", name2, skor2);
+    printf("                    |--> %-8s : %d\n", winner, skor11);
+    printf("%-8s : %d\n", name3, skor4);
+    printf("%-8s : %d\n", name4, skor5);
+    printf("        |--> %-8s : %d\n", name5, skor6);
+    printf("%-8s : %d\n", name5, skor6);
+    printf("                                |--> %-8s : %d\n", winner, skor15);
+    printf("%-8s : %d\n", name6, skor7);
+    printf("        |--> %-8s : %d\n", name7, skor8);
+    printf("%-8s : %d\n", name7, skor8);
+    printf("%-8s : %d\n", name8, skor9);
+    printf("        |--> %-8s : %d\n", name9, skor10);
+    printf("%-8s : %d\n", name9, skor10);
+    printf("                    |--> %-8s : %d\n", name9, skor14);
+    printf("Winner : %-8s\n\n", winner);
 }
 
-void templatebagan12tim(char teams[][50], int scores[], char* winner) {
-    printf("BIGETRON : %d\n", scores[0]);
-    printf("\t\t|--> BIGETRON : %d\n", scores[0]);
-    printf("ONIC     : %d\n", scores[1]);
-    printf("\t\t\t    |--> BIGETRON : %d\n", scores[0]);
-    printf("\t\t     SIREN    : %d\n", scores[9]);
-    printf("AEROWOLF : %d\n", scores[2]);
-    printf("\t\t\t\t\t\t|--> %s\n", winner);
-    printf("\t\t|--> AEROWOLF : %d\n", scores[2]);
-    printf("RRQ      : %d\n", scores[3]);
-    printf("\t\t\t    |--> ALTEREGO : %d\n", scores[8]);
-    printf("\t\t     ALTEREGO : %d\n", scores[8]);
-    printf("EVOS     : %d\n", scores[4]);
-    printf("\t\t\t\t\t\t    |--> BIGETRON\n");
-    printf("\t\t|--> BOOM     : %d\n", scores[5]);
-    printf("BOOM     : %d\n", scores[5]);
-    printf("\t\t\t    |--> BOOM     : %d\n", scores[5]);
-    printf("\t\t     HFX      : %d\n", scores[10]);
-    printf("AURA     : %d\n", scores[6]);
-    printf("\t\t\t\t\t\t    |--> GLU      : %d\n");
-    printf("\t\t|--> AURA     : %d\n", scores[6]);
-    printf("GEEKFAM  : %d\n", scores[7]);
-    printf("\t\t\t    |--> GLU      : %d\n", scores[11]);
-    printf("\t\t     GLU      : %d\n", scores[11]);
+void templatebagan10tim(addressTree root, addressList head, Stack *history) {
+    if (root == NULL || root->left == NULL || root->right == NULL || root->left->left == NULL || root->left->right == NULL || root->right->left == NULL || root->right->right == NULL) {
+        printf("Pohon turnamen kosong atau tidak valid.\n");
+        return;
+    }
+    char name1[9], name2[9], name3[9], name4[9], name5[9], name6[9], name7[9], name8[9], name9[9], name10[9], winner[9];
+    int skor1, skor2, skor3, skor4, skor5, skor6, skor7, skor8, skor9, skor10, skor11, skor12, skor13, skor14, skor17, skor18;
+    getTeamName(root->left->left->left->id_tim1, head, name1);
+    getTeamName(root->left->left->left->id_tim2, head, name2);
+    getTeamName(root->left->left->id_tim2, head, name5);
+    getTeamName(root->left->right->left->id_tim1, head, name6);
+    getTeamName(root->left->right->id_tim2, head, name7);
+    getTeamName(root->right->left->id_tim1, head, name3);
+    getTeamName(root->right->left->id_tim2, head, name4);
+    getTeamName(root->right->right->id_tim1, head, name8);
+    getTeamName(root->right->right->id_tim2, head, name9);
+    getTeamName(root->right->id_tim2, head, name10);
+    getTeamName(root->id_pemenang, head, winner);
+    getMatchScore(root->left->left->left->match_id, history, &skor1, &skor2);
+    getMatchScore(root->left->left->match_id, history, &skor5, &skor6);
+    getMatchScore(root->left->right->left->match_id, history, &skor7, &skor8);
+    getMatchScore(root->right->left->match_id, history, &skor3, &skor4);
+    getMatchScore(root->right->right->match_id, history, &skor11, &skor12);
+    getMatchScore(root->left->match_id, history, &skor9, &skor10);
+    getMatchScore(root->right->match_id, history, &skor13, &skor14);
+    getMatchScore(root->match_id, history, &skor17, &skor18);
 
-    printf("TIM 1 : %s\n", teams[0]);
-    printf("TIM 2 : %s\n", teams[1]);
-    printf("TIM 3 : %s\n", teams[2]);
-    printf("TIM 4 : %s\n", teams[3]);
-    printf("TIM 5 : %s\n", teams[4]);
-    printf("TIM 6 : %s\n", teams[5]);
-    printf("TIM 7 : %s\n", teams[6]);
-    printf("TIM 8 : %s\n", teams[7]);
-    printf("TIM 9 : %s\n", teams[8]);
-    printf("TIM 10 : %s\n", teams[9]);
-    printf("TIM 11 : %s\n", teams[10]);
-    printf("TIM 12 : %s\n", teams[11]);
-
-    printf("Pertandingan 1 : %s vs %s\n", teams[0], teams[1]);
-    printf("Pertandingan 2 : %s vs %s\n", teams[2], teams[3]);
-    printf("Pertandingan 3 : %s vs %s\n", teams[4], teams[5]);
-    printf("Pertandingan 4 : %s vs %s\n", teams[6], teams[7]);
-    printf("Pertandingan 5 : %s vs %s\n", teams[0], teams[9]);
-    printf("Pertandingan 6 : %s vs %s\n", teams[2], teams[8]);
-    printf("Pertandingan 7 : %s vs %s\n", teams[5], teams[10]);
-    printf("Pertandingan 8 : %s vs %s\n", teams[6], teams[11]);
-    printf("Pertandingan 9 : %s vs %s\n", teams[0], teams[8]);
-    printf("Pertandingan 10 : %s vs %s\n", teams[5], teams[11]);
-    printf("Winner : %s\n", winner);
+    printf("\n");
+    printf("%-8s : %d\n", name1, skor1);
+    printf("        |--> %-8s : %d\n", name1, skor5);
+    printf("%-8s : %d\n", name2, skor2);
+    printf("                    |--> %-8s : %d\n", name1, skor9);
+    printf("%-8s : %d\n", name5, skor6);
+    printf("%-8s : %d\n", name6, skor7);
+    printf("        |                    |--> %-8s : %d\n", winner, skor17);
+    printf("%-8s : %d\n", name6, skor8);
+    printf("%-8s : %d\n", name3, skor3);
+    printf("        |--> %-8s : %d\n", name3, skor13);
+    printf("%-8s : %d\n", name4, skor4);
+    printf("                    |--> %-8s : %d\n", name3, skor14);
+    printf("%-8s : %d\n", name8, skor11);
+    printf("        |--> %-8s : %d\n", name9, skor12);
+    printf("%-8s : %d\n", name9, skor12);
+    printf("%-8s : %d\n", name10, skor14);
+    printf("Winner : %-8s\n\n", winner);
 }
 
-void templatebagan13tim(char teams[][50], int scores[], char* winner) {
-    printf("BIGETRON : %d\n", scores[0]);
-    printf("\t\t|--> BIGETRON : %d\n", scores[0]);
-    printf("ONIC     : %d\n", scores[1]);
-    printf("\t\t\t    |--> BIGETRON : %d\n", scores[0]);
-    printf("\t\t     HFX      : %d\n", scores[10]);
-    printf("AEROWOLF : %d\n", scores[2]);
-    printf("\t\t\t\t\t\t|--> %s\n", winner);
-    printf("\t\t|--> AEROWOLF : %d\n", scores[2]);
-    printf("RRQ      : %d\n", scores[3]);
-    printf("\t\t\t    |--> AEROWOLF : %d\n", scores[2]);
-    printf("EVOS     : %d\n", scores[4]);
-    printf("\t\t\t\t\t\t    |--> BIGETRON\n");
-    printf("\t\t|--> EVOS     : %d\n", scores[4]);
-    printf("BOOM     : %d\n", scores[5]);
-    printf("\t\t\t    |--> AURA     : %d\n", scores[6]);
-    printf("AURA     : %d\n", scores[6]);
-    printf("\t\t\t\t\t\t    |--> PJEV     : %d\n");
-    printf("\t\t|--> SIREN    : %d\n", scores[9]);
-    printf("GEEKFAM  : %d\n", scores[7]);
-    printf("\t\t\t    |--> PJEV     : %d\n", scores[12]);
-    printf("ALTEREGO : %d\n", scores[8]);
-    printf("\t\t     PJEV     : %d\n", scores[12]);
-
-    printf("TIM 1 : %s\n", teams[0]);
-    printf("TIM 2 : %s\n", teams[1]);
-    printf("TIM 3 : %s\n", teams[2]);
-    printf("TIM 4 : %s\n", teams[3]);
-    printf("TIM 5 : %s\n", teams[4]);
-    printf("TIM 6 : %s\n", teams[5]);
-    printf("TIM 7 : %s\n", teams[6]);
-    printf("TIM 8 : %s\n", teams[7]);
-    printf("TIM 9 : %s\n", teams[8]);
-    printf("TIM 10 : %s\n", teams[9]);
-    printf("TIM 11 : %s\n", teams[10]);
-    printf("TIM 12 : %s\n", teams[11]);
-    printf("TIM 13 : %s\n", teams[12]);
-
-    printf("Pertandingan 1 : %s vs %s\n", teams[0], teams[1]);
-    printf("Pertandingan 2 : %s vs %s\n", teams[2], teams[3]);
-    printf("Pertandingan 3 : %s vs %s\n", teams[4], teams[5]);
-    printf("Pertandingan 4 : %s vs %s\n", teams[6], teams[7]);
-    printf("Pertandingan 5 : %s vs %s\n", teams[8], teams[9]);
-    printf("Pertandingan 6 : %s vs %s\n", teams[0], teams[10]);
-    printf("Pertandingan 7 : %s vs %s\n", teams[8], teams[4]);
-    printf("Pertandingan 8 : %s vs %s\n", teams[9], teams[12]);
-    printf("Pertandingan 9 : %s vs %s\n", teams[0], teams[8]);
-    printf("Pertandingan 10 : %s vs %s\n", teams[6], teams[12]);
-    printf("Pertandingan 11 : %s vs %s\n", teams[0], teams[12]);
-    printf("Winner : %s\n", winner);
+void templatebagan11tim(addressTree root, addressList head, Stack *history) {
+    (void)history;
+    if (root == NULL || root->left == NULL || root->right == NULL) {
+        printf("Pohon turnamen kosong atau tidak valid.\n");
+        return;
+    }
+    // Untuk 11 tim, pohon biasanya tidak seimbang, tampilkan secara sederhana
+    char winner[9];
+    getTeamName(root->id_pemenang, head, winner);
+    printf("\nBagan 11 Tim (ringkas):\n");
+    printf("Final Winner: %s\n", winner);
+    // Untuk detail, lakukan traversal preorder dan tampilkan setiap node
+    // (bisa dikembangkan lebih lanjut sesuai kebutuhan visualisasi)
 }
 
-void templatebagan14tim(char teams[][50], int scores[], char* winner) {
-    printf("BIGETRON : %d\n", scores[0]);
-    printf("\t\t|--> BIGETRON : %d\n", scores[0]);
-    printf("ONIC     : %d\n", scores[1]);
-    printf("\t\t\t    |--> BIGETRON : %d\n", scores[0]);
-    printf("\t\t     PJEV     : %d\n", scores[12]);
-    printf("AEROWOLF : %d\n", scores[2]);
-    printf("\t\t\t\t\t\t|--> %s\n", winner);
-    printf("\t\t|--> AEROWOLF : %d\n", scores[2]);
-    printf("RRQ      : %d\n", scores[3]);
-    printf("\t\t\t    |--> AEROWOLF : %d\n", scores[2]);
-    printf("EVOS     : %d\n", scores[4]);
-    printf("\t\t\t\t\t\t    |--> BIGETRON\n");
-    printf("\t\t|--> EVOS     : %d\n", scores[4]);
-    printf("BOOM     : %d\n", scores[5]);
-    printf("\t\t\t    |--> AURA     : %d\n", scores[6]);
-    printf("AURA     : %d\n", scores[6]);
-    printf("\t\t\t\t\t\t    |--> ALTEREGO : %d\n");
-    printf("\t\t|--> ALTEREGO : %d\n", scores[8]);
-    printf("GEEKFAM  : %d\n", scores[7]);
-    printf("\t\t\t    |--> ALTEREGO : %d\n", scores[8]);
-    printf("ALTEREGO : %d\n", scores[8]);
-    printf("\t\t     VOIN     : %d\n", scores[13]);
-    printf("SIREN    : %d\n", scores[9]);
-    printf("\t\t|--> EVOS     : %d\n", scores[4]);
-    printf("HFX      : %d\n", scores[10]);
-    printf("\t\t     GLU      : %d\n", scores[11]);
-
-    printf("TIM 1 : %s\n", teams[0]);
-    printf("TIM 2 : %s\n", teams[1]);
-    printf("TIM 3 : %s\n", teams[2]);
-    printf("TIM 4 : %s\n", teams[3]);
-    printf("TIM 5 : %s\n", teams[4]);
-    printf("TIM 6 : %s\n", teams[5]);
-    printf("TIM 7 : %s\n", teams[6]);
-    printf("TIM 8 : %s\n", teams[7]);
-    printf("TIM 9 : %s\n", teams[8]);
-    printf("TIM 10 : %s\n", teams[9]);
-    printf("TIM 11 : %s\n", teams[10]);
-    printf("TIM 12 : %s\n", teams[11]);
-    printf("TIM 13 : %s\n", teams[12]);
-    printf("TIM 14 : %s\n", teams[13]);
-
-    printf("Pertandingan 1 : %s vs %s\n", teams[0], teams[1]);
-    printf("Pertandingan 2 : %s vs %s\n", teams[2], teams[3]);
-    printf("Pertandingan 3 : %s vs %s\n", teams[4], teams[5]);
-    printf("Pertandingan 4 : %s vs %s\n", teams[6], teams[7]);
-    printf("Pertandingan 5 : %s vs %s\n", teams[8], teams[9]);
-    printf("Pertandingan 6 : %s vs %s\n", teams[10], teams[11]);
-    printf("Pertandingan 7 : %s vs %s\n", teams[0], teams[12]);
-    printf("Pertandingan 8 : %s vs %s\n", teams[2], teams[4]);
-    printf("Pertandingan 9 : %s vs %s\n", teams[6], teams[13]);
-    printf("Pertandingan 10 : %s vs %s\n", teams[8], teams[4]);
-    printf("Pertandingan 11 : %s vs %s\n", teams[0], teams[2]);
-    printf("Pertandingan 12 : %s vs %s\n", teams[6], teams[8]);
-    printf("Winner : %s\n", winner);
+void templatebagan12tim(addressTree root, addressList head, Stack *history) {
+    (void)history;
+    if (root == NULL || root->left == NULL || root->right == NULL) {
+        printf("Pohon turnamen kosong atau tidak valid.\n");
+        return;
+    }
+    char winner[9];
+    getTeamName(root->id_pemenang, head, winner);
+    printf("\nBagan 12 Tim (ringkas):\n");
+    printf("Final Winner: %s\n", winner);
 }
 
-void templatebagan15tim(char teams[][50], int scores[], char* winner) {
-    printf("BIGETRON : %d\n", scores[0]);
-    printf("\t\t|--> BIGETRON : %d\n", scores[0]);
-    printf("ONIC     : %d\n", scores[1]);
-    printf("\t\t\t    |--> BIGETRON : %d\n", scores[0]);
-    printf("\t\t     LIQUID   : %d\n", scores[14]);
-    printf("AEROWOLF : %d\n", scores[2]);
-    printf("\t\t\t\t\t\t|--> %s\n", winner);
-    printf("\t\t|--> AEROWOLF : %d\n", scores[2]);
-    printf("RRQ      : %d\n", scores[3]);
-    printf("\t\t\t    |--> AEROWOLF : %d\n", scores[2]);
-    printf("EVOS     : %d\n", scores[4]);
-    printf("\t\t\t\t\t\t    |--> BIGETRON\n");
-    printf("\t\t|--> EVOS     : %d\n", scores[4]);
-    printf("BOOM     : %d\n", scores[5]);
-    printf("\t\t\t    |--> AURA     : %d\n", scores[6]);
-    printf("AURA     : %d\n", scores[6]);
-    printf("\t\t\t\t\t\t    |--> HFX      : %d\n");
-    printf("\t\t|--> ALTEREGO : %d\n", scores[8]);
-    printf("GEEKFAM  : %d\n", scores[7]);
-    printf("\t\t\t    |--> HFX      : %d\n", scores[10]);
-    printf("ALTEREGO : %d\n", scores[8]);
-    printf("\t\t     SIREN    : %d\n", scores[9]);
-    printf("SIREN    : %d\n", scores[9]);
-    printf("\t\t|--> HFX      : %d\n", scores[10]);
-    printf("HFX      : %d\n", scores[10]);
-    printf("\t\t     GLU      : %d\n", scores[11]);
-    printf("GLU      : %d\n", scores[11]);
-    printf("\t\t|--> PJEV     : %d\n", scores[12]);
-    printf("PJEV     : %d\n", scores[12]);
-    printf("\t\t     VOIN     : %d\n", scores[13]);
-
-    printf("TIM 1 : %s\n", teams[0]);
-    printf("TIM 2 : %s\n", teams[1]);
-    printf("TIM 3 : %s\n", teams[2]);
-    printf("TIM 4 : %s\n", teams[3]);
-    printf("TIM 5 : %s\n", teams[4]);
-    printf("TIM 6 : %s\n", teams[5]);
-    printf("TIM 7 : %s\n", teams[6]);
-    printf("TIM 8 : %s\n", teams[7]);
-    printf("TIM 9 : %s\n", teams[8]);
-    printf("TIM 10 : %s\n", teams[9]);
-    printf("TIM 11 : %s\n", teams[10]);
-    printf("TIM 12 : %s\n", teams[11]);
-    printf("TIM 13 : %s\n", teams[12]);
-    printf("TIM 14 : %s\n", teams[13]);
-    printf("TIM 15 : %s\n", teams[14]);
-
-    printf("Pertandingan 1 : %s vs %s\n", teams[0], teams[1]);
-    printf("Pertandingan 2 : %s vs %s\n", teams[2], teams[3]);
-    printf("Pertandingan 3 : %s vs %s\n", teams[4], teams[5]);
-    printf("Pertandingan 4 : %s vs %s\n", teams[6], teams[7]);
-    printf("Pertandingan 5 : %s vs %s\n", teams[8], teams[9]);
-    printf("Pertandingan 6 : %s vs %s\n", teams[10], teams[11]);
-    printf("Pertandingan 7 : %s vs %s\n", teams[12], teams[13]);
-    printf("Pertandingan 8 : %s vs %s\n", teams[0], teams[14]);
-    printf("Pertandingan 9 : %s vs %s\n", teams[2], teams[4]);
-    printf("Pertandingan 10 : %s vs %s\n", teams[6], teams[8]);
-    printf("Pertandingan 11 : %s vs %s\n", teams[10], teams[12]);
-    printf("Pertandingan 12 : %s vs %s\n", teams[0], teams[2]);
-    printf("Pertandingan 13 : %s vs %s\n", teams[6], teams[10]);
-    printf("Winner : %s\n", winner);
+void templatebagan13tim(addressTree root, addressList head, Stack *history) {
+    (void)history;
+    if (root == NULL || root->left == NULL || root->right == NULL) {
+        printf("Pohon turnamen kosong atau tidak valid.\n");
+        return;
+    }
+    char winner[9];
+    getTeamName(root->id_pemenang, head, winner);
+    printf("\nBagan 13 Tim (ringkas):\n");
+    printf("Final Winner: %s\n", winner);
 }
 
-void templatebagan16tim(char teams[][50], int scores[], char* winner) {
-    printf("BIGETRON : %d\n", scores[0]);
-    printf("\t\t|--> BIGETRON : %d\n", scores[0]);
-    printf("ONIC     : %d\n", scores[1]);
-    printf("\t\t\t\t    |--> BIGETRON : %d\n", scores[0]);
-    printf("AEROWOLF : %d\n", scores[2]);
-    printf("\t\t|--> AEROWOLF : %d\n", scores[2]);
-    printf("RRQ      : %d\n", scores[3]);
-    printf("\t\t\t\t\t\t    |--> BIGETRON : %d\n", scores[0]);
-    printf("EVOS     : %d\n", scores[4]);
-    printf("\t\t|--> EVOS     : %d\n", scores[4]);
-    printf("BOOM     : %d\n", scores[5]);
-    printf("\t\t\t\t    |--> EVOS     : %d\n", scores[4]);
-    printf("AURA     : %d\n", scores[6]);
-    printf("\t\t|--> AURA     : %d\n", scores[6]);
-    printf("GEEKFAM  : %d\n", scores[7]);
-    printf("\t\t\t\t\t\t    |--> BIGETRON\n");
-    printf("ALTEREGO : %d\n", scores[8]);
-    printf("\t\t|--> ALTEREGO : %d\n", scores[8]);
-    printf("SIREN    : %d\n", scores[9]);
-    printf("\t\t\t\t    |--> HFX      : %d\n", scores[10]);
-    printf("HFX      : %d\n", scores[10]);
-    printf("\t\t|--> HFX      : %d\n", scores[10]);
-    printf("GLU      : %d\n", scores[11]);
-    printf("\t\t\t\t\t\t    |--> HFX      : %d\n", scores[10]);
-    printf("PJEV     : %d\n", scores[12]);
-    printf("\t\t|--> PJEV     : %d\n", scores[12]);
-    printf("VOIN     : %d\n", scores[13]);
-    printf("\t\t\t\t    |--> PJEV     : %d\n", scores[12]);
-    printf("LIQUID   : %d\n", scores[14]);
-    printf("\t\t|--> LIQUID   : %d\n", scores[14]);
-    printf("MORPH    : %d\n", scores[15]);
+void templatebagan14tim(addressTree root, addressList head, Stack *history) {
+    (void)history;
+    if (root == NULL || root->left == NULL || root->right == NULL) {
+        printf("Pohon turnamen kosong atau tidak valid.\n");
+        return;
+    }
+    char winner[9];
+    getTeamName(root->id_pemenang, head, winner);
+    printf("\nBagan 14 Tim (ringkas):\n");
+    printf("Final Winner: %s\n", winner);
+}
 
-    printf("TIM 1 : %s\n", teams[0]);
-    printf("TIM 2 : %s\n", teams[1]);
-    printf("TIM 3 : %s\n", teams[2]);
-    printf("TIM 4 : %s\n", teams[3]);
-    printf("TIM 5 : %s\n", teams[4]);
-    printf("TIM 6 : %s\n", teams[5]);
-    printf("TIM 7 : %s\n", teams[6]);
-    printf("TIM 8 : %s\n", teams[7]);
-    printf("TIM 9 : %s\n", teams[8]);
-    printf("TIM 10 : %s\n", teams[9]);
-    printf("TIM 11 : %s\n", teams[10]);
-    printf("TIM 12 : %s\n", teams[11]);
-    printf("TIM 13 : %s\n", teams[12]);
-    printf("TIM 14 : %s\n", teams[13]);
-    printf("TIM 15 : %s\n", teams[14]);
-    printf("TIM 16 : %s\n", teams[15]);
+void templatebagan15tim(addressTree root, addressList head, Stack *history) {
+    (void)history;
+    if (root == NULL || root->left == NULL || root->right == NULL) {
+        printf("Pohon turnamen kosong atau tidak valid.\n");
+        return;
+    }
+    char winner[9];
+    getTeamName(root->id_pemenang, head, winner);
+    printf("\nBagan 15 Tim (ringkas):\n");
+    printf("Final Winner: %s\n", winner);
+}
 
-    printf("Pertandingan 1 : %s vs %s\n", teams[0], teams[1]);
-    printf("Pertandingan 2 : %s vs %s\n", teams[2], teams[3]);
-    printf("Pertandingan 3 : %s vs %s\n", teams[4], teams[5]);
-    printf("Pertandingan 4 : %s vs %s\n", teams[6], teams[7]);
-    printf("Pertandingan 5 : %s vs %s\n", teams[8], teams[9]);
-    printf("Pertandingan 6 : %s vs %s\n", teams[10], teams[11]);
-    printf("Pertandingan 7 : %s vs %s\n", teams[12], teams[13]);
-    printf("Pertandingan 8 : %s vs %s\n", teams[14], teams[15]);
-    printf("Pertandingan 9 : %s vs %s\n", teams[0], teams[2]);
-    printf("Pertandingan 10 : %s vs %s\n", teams[4], teams[6]);
-    printf("Pertandingan 11 : %s vs %s\n", teams[8], teams[10]);
-    printf("Pertandingan 12 : %s vs %s\n", teams[12], teams[14]);
-    printf("Pertandingan 13 : %s vs %s\n", teams[0], teams[4]);
-    printf("Pertandingan 14 : %s vs %s\n", teams[8], teams[12]);
-    printf("Winner : %s\n", winner);
+void templatebagan16tim(addressTree root, addressList head, Stack *history) {
+    if (root == NULL || root->left == NULL || root->right == NULL ||
+        root->left->left == NULL || root->left->right == NULL ||
+        root->right->left == NULL || root->right->right == NULL) {
+        printf("Pohon turnamen kosong atau tidak valid.\n");
+        return;
+    }
+    char name1[9], name2[9], name3[9], name4[9], name5[9], name6[9], name7[9], name8[9];
+    char name9[9], name10[9], name11[9], name12[9], name13[9], name14[9], name15[9], name16[9], winner[9];
+    int skor1, skor2, skor3, skor4, skor5, skor6, skor7, skor8;
+    int skor9, skor10, skor11, skor12, skor13, skor14, skor15, skor16;
+    int skor17, skor18, skor19, skor20, skor21, skor22, skor23, skor24, skor25, skor26, skor27, skor28, skor29, skor30;
+
+    // Babak 16 besar
+    getTeamName(root->left->left->left->left->id_tim1, head, name1);
+    getTeamName(root->left->left->left->left->id_tim2, head, name2);
+    getTeamName(root->left->left->left->right->id_tim1, head, name3);
+    getTeamName(root->left->left->left->right->id_tim2, head, name4);
+    getTeamName(root->left->left->right->left->id_tim1, head, name5);
+    getTeamName(root->left->left->right->left->id_tim2, head, name6);
+    getTeamName(root->left->left->right->right->id_tim1, head, name7);
+    getTeamName(root->left->left->right->right->id_tim2, head, name8);
+    getTeamName(root->right->right->left->left->id_tim1, head, name9);
+    getTeamName(root->right->right->left->left->id_tim2, head, name10);
+    getTeamName(root->right->right->left->right->id_tim1, head, name11);
+    getTeamName(root->right->right->left->right->id_tim2, head, name12);
+    getTeamName(root->right->right->right->left->id_tim1, head, name13);
+    getTeamName(root->right->right->right->left->id_tim2, head, name14);
+    getTeamName(root->right->right->right->right->id_tim1, head, name15);
+    getTeamName(root->right->right->right->right->id_tim2, head, name16);
+    getTeamName(root->id_pemenang, head, winner);
+
+    // Skor babak 16 besar
+    getMatchScore(root->left->left->left->left->match_id, history, &skor1, &skor2);
+    getMatchScore(root->left->left->left->right->match_id, history, &skor3, &skor4);
+    getMatchScore(root->left->left->right->left->match_id, history, &skor5, &skor6);
+    getMatchScore(root->left->left->right->right->match_id, history, &skor7, &skor8);
+    getMatchScore(root->right->right->left->left->match_id, history, &skor9, &skor10);
+    getMatchScore(root->right->right->left->right->match_id, history, &skor11, &skor12);
+    getMatchScore(root->right->right->right->left->match_id, history, &skor13, &skor14);
+    getMatchScore(root->right->right->right->right->match_id, history, &skor15, &skor16);
+
+    // Skor babak 8 besar
+    getMatchScore(root->left->left->left->match_id, history, &skor17, &skor18);
+    getMatchScore(root->left->left->right->match_id, history, &skor19, &skor20);
+    getMatchScore(root->right->right->left->match_id, history, &skor21, &skor22);
+    getMatchScore(root->right->right->right->match_id, history, &skor23, &skor24);
+
+    // Skor semifinal
+    getMatchScore(root->left->left->match_id, history, &skor25, &skor26);
+    getMatchScore(root->right->right->match_id, history, &skor27, &skor28);
+
+    // Skor final
+    getMatchScore(root->match_id, history, &skor29, &skor30);
+
+    printf("\nBabak 16 Besar:\n");
+    printf("%-8s : %d vs %-8s : %d\n", name1, skor1, name2, skor2);
+    printf("%-8s : %d vs %-8s : %d\n", name3, skor3, name4, skor4);
+    printf("%-8s : %d vs %-8s : %d\n", name5, skor5, name6, skor6);
+    printf("%-8s : %d vs %-8s : %d\n", name7, skor7, name8, skor8);
+    printf("%-8s : %d vs %-8s : %d\n", name9, skor9, name10, skor10);
+    printf("%-8s : %d vs %-8s : %d\n", name11, skor11, name12, skor12);
+    printf("%-8s : %d vs %-8s : %d\n", name13, skor13, name14, skor14);
+    printf("%-8s : %d vs %-8s : %d\n", name15, skor15, name16, skor16);
+
+    printf("\nBabak 8 Besar:\n");
+    printf("Match 1: %d vs %d\n", skor17, skor18);
+    printf("Match 2: %d vs %d\n", skor19, skor20);
+    printf("Match 3: %d vs %d\n", skor21, skor22);
+    printf("Match 4: %d vs %d\n", skor23, skor24);
+
+    printf("\nSemifinal:\n");
+    printf("Match 1: %d vs %d\n", skor25, skor26);
+    printf("Match 2: %d vs %d\n", skor27, skor28);
+
+    printf("\nFinal:\n");
+    printf("Match: %d vs %d\n", skor29, skor30);
+    printf("Winner : %-8s\n\n", winner);
 }
