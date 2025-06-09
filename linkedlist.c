@@ -2,12 +2,9 @@
 // NIM : 241524052
 // Deskripsi : File ini berisikan implementasi dari fungsi-fungsi yang dideklarasikan di linkedlist.h untuk mengelola linked list
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "linkedlist.h"
 
-static int next_id = 1; // Variabel statis untuk ID unik
+static int next_id = 1; 
 
 void initLinkedList(addressList *head) {
     *head = NULL;
@@ -36,30 +33,46 @@ void addToLinkedList(addressList *head, char* namaTim) {
     printf("Tim %s berhasil ditambahkan.\n", namaTim);
 }
 
-void removeFromLinkedList(addressList *head, char* namaTim) {
-    infotype info;
-    deleteValue(head, namaTim);
-    printf("Tim %s berhasil dihapus.\n", namaTim);
-}
-
 void displayLinkedList(addressList head) {
     if (head == NULL) {
         printf("Daftar tim kosong.\n");
         return;
     }
+   
+    printf("\033[1;36m"); 
     printf("\n== Daftar Tim ==\n");
+    printf("%-5s %-8s %-6s %-6s %-6s\n", 
+           "ID", "Nama", "Laga", "Menang", "Kalah");
+    printf("\033[0m"); 
     addressList current = head;
-    int count = 1;
+    int row = 0;
     while (current != NULL) {
-        printf("%d. %s\n", count++, current->namaTim);
+        
+        if (row % 2 == 0)
+            printf("\033[1;37m"); 
+        else
+            printf("\033[0;37m"); 
+        char namaPendek[9];
+        strncpy(namaPendek, current->namaTim, 8);
+        namaPendek[8] = '\0';
+        printf("%-5d %-8s %-6d %-6d %-6d\n", 
+               current->id_tim, namaPendek, 
+               current->laga, current->kemenangan, current->kekalahan);
+        printf("\033[0m"); 
         current = current->next;
+        row++;
     }
 }
 
 addressList createNode(infotype info) {
+    if (strlen(info) >= 50) {
+        printf("Nama tim terlalu panjang (maksimal 49 karakter).\n");
+        return NULL;
+    }
     addressList p = (addressList)malloc(sizeof(node));
     if (p != NULL) {
-        strcpy(p->namaTim, info);
+        strncpy(p->namaTim, info, 49);
+        p->namaTim[49] = '\0'; 
         p->id_tim = 0;
         p->laga = 0;
         p->kemenangan = 0;
@@ -98,14 +111,12 @@ void DeAlokasi(addressList *head) {
     }
 }
 
-void deleteFirst(addressList *head, infotype *info) {
+void deleteFirst(addressList *head) {
     if (*head == NULL) {
-        *info = NULL;
         return;
     }
     addressList temp = *head;
-    *info = temp->namaTim;
-    *head = temp->next;
+    *head = (*head)->next;
     free(temp);
 }
 
@@ -133,9 +144,9 @@ void deleteValue(addressList *head, infotype info) {
     }
 }
 
-int countNode(addressList L) {
+int countNode(addressList head) {
     int count = 0;
-    while (L != NULL) {
+    while (head != NULL) {
         count++;
         head = head->next;
     }
@@ -151,6 +162,8 @@ void updateTeamStats(addressList head, char* namaTim, int menang, int kalah) {
         temp->laga += 1;
         temp->kemenangan += menang;
         temp->kekalahan += kalah;
+    } else {
+        printf("Tim %s tidak ditemukan untuk pembaruan statistik.\n", namaTim);
     }
 }
 
@@ -163,4 +176,14 @@ addressList searchNodeById(addressList head, int id_tim) {
         temp = temp->next;
     }
     return NULL;
+}
+
+void resetAllTeamStats(addressList head) {
+    addressList temp = head;
+    while (temp != NULL) {
+        temp->laga = 0;
+        temp->kemenangan = 0;
+        temp->kekalahan = 0;
+        temp = temp->next;
+    }
 }
