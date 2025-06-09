@@ -8,6 +8,7 @@ NIM: 241524035
 
 #include "fileio.h"
 
+void initialUI(addressList *head, Queue *matchQueue, addressTree *tournamentTree, Stack *matchHistory, char *namaEvent);
 void uiGreetings(char *namaEvent);
 void mainMenu(addressList *head, Queue *matchQueue, addressTree *tournamentTree, Stack *matchHistory, char *namaEvent);
 void showsTambahTim(addressList *head);
