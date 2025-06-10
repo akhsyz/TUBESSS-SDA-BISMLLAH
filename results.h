@@ -4,7 +4,7 @@
 #include "stack.h"
 
 // Deklarasi fungsi 
-void tampilkanStatistik(StackNode* s, StackNode head);
+void tampilkanStatistik(addressList head);
 void tampilkanHistori(Stack *s);
 void inputMatchResult(addressTree *turnamentTree, addressList head, Stack *matchHistory );
 void undoMatchResult (addressTree *turnmanetTree, addressList head, Stack *matchHistory);
