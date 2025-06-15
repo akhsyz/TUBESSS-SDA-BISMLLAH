@@ -24,9 +24,8 @@ static void insertAtFirstStack(Stack* s, StackNode* newNode) {
 }
 
 // Wrapper untuk deleteFirst agar kompatibel dengan StackNode
-static bool deleteFirstStack(Stack* s, MatchResult* result) {
+static boolean deleteFirstStack(Stack* s, MatchResult* result) {
   if (s->top == NULL){
-    printf("Stack kosong kang/teh.\n");
     return false;
   }
   StackNode* temp = s->top;
@@ -44,7 +43,7 @@ void inisialisasiStack(Stack* s) {
 }
 
 // Cek apakah stack kosong 
-bool apakahStackKosong(Stack* s) {
+boolean apakahStackKosong(Stack* s) {
   return (s->top == NULL);
 }
 
@@ -58,17 +57,14 @@ void push (Stack* s, MatchResult data) {
   insertAtFirstStack(s, newNode); // Gunakan logika insert at first
 }
 
-
 // Hapus dan kembalikan pertandingan terakhir
-bool pop (Stack* s, MatchResult* result){
+boolean pop (Stack* s, MatchResult* result){
   return deleteFirstStack(s, result); // Gunakan logika deleteFirst
-  }
-
+}
 
 // Lihat pertandingan teratas tanpa menghapus 
-bool peek(Stack* s, MatchResult* result){
+boolean peek(Stack* s, MatchResult* result){
   if (apakahStackKosong(s)) {
-    printf("Stack kosong Kang/Teh.\n");
     return false;
   }
   *result = s->top->data;
@@ -82,9 +78,7 @@ void clearStack(Stack* s){
   s->size = 0;
 }
 
-
 // Mendapatkan ukuran stack
 int getStackSize(Stack* s){
   return s->size;
 }
-
