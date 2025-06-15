@@ -1,321 +1,376 @@
 #include "fileio.h"
 #include <string.h>
 #include <stdbool.h>
+#include <time.h>
+#include <sys/stat.h>  
+#include <errno.h>     
 
-void saveTeamsToFile(addressList head, const char* filename) {
+void createDataFolder() {
+    const char* folder_name = "tournament_data";
+    
+#ifdef _WIN32
+    if (mkdir(folder_name) != 0) {
+        if (errno != EEXIST) {
+            printf("Warning: Gagal membuat folder %s\n", folder_name);
+        }
+    }
+#else
+    // Linux/Unix
+    if (mkdir(folder_name, 0755) != 0) {
+        if (errno != EEXIST) {
+            printf("Warning: Gagal membuat folder %s\n", folder_name);
+        }
+    }
+#endif
+}
+
+void createJSONPath(const char* tournament_name, char* output_path, size_t max_len) {
+    createDataFolder(); // Pastikan folder ada
+    snprintf(output_path, max_len, "tournament_data/%s.json", tournament_name);
+}
+
+// Fungsi helper untuk escape string dalam JSON
+void escapeJsonString(const char* input, char* output) {
+    int j = 0;
+    for (int i = 0; input[i] != '\0'; i++) {
+        if (input[i] == '"') {
+            output[j++] = '\\';
+            output[j++] = '"';
+        } else if (input[i] == '\\') {
+            output[j++] = '\\';
+            output[j++] = '\\';
+        } else {
+            output[j++] = input[i];
+        }
+    }
+    output[j] = '\0';
+}
+
+// Fungsi untuk mendapatkan timestamp saat ini
+void getCurrentTimestamp(char* timestamp) {
+    time_t now = time(0);
+    struct tm* timeinfo = localtime(&now);
+    strftime(timestamp, 20, "%Y-%m-%d %H:%M:%S", timeinfo);
+}
+
+// Fungsi untuk menyimpan semua data turnamen dalam format JSON
+void saveTournamentToJSON(addressList head, addressTree root, Stack* history, const char* tournament_name, const char* filename) {
+    saveTournamentToJSONQuiet(head, root, history, tournament_name, filename, true);
+}
+
+// Fungsi untuk menyimpan tanpa output verbose (untuk exit yang clean)
+void saveTournamentToJSONQuiet(addressList head, addressTree root, Stack* history, const char* tournament_name, const char* filename, bool show_output) {
     FILE* file = fopen(filename, "w");
     if (file == NULL) {
         printf("Gagal membuka file %s untuk menulis.\n", filename);
         return;
     }
 
-    if (head == NULL) {
-        printf("Daftar tim kosong, tidak ada data untuk disimpan.\n");
-        fclose(file);
-        return;
-    }
+    char timestamp[20];
+    getCurrentTimestamp(timestamp);
+    int total_teams = countNode(head);
 
+    // Header JSON
+    fprintf(file, "{\n");
+    fprintf(file, "  \"tournament_info\": {\n");
+    fprintf(file, "    \"name\": \"%s\",\n", tournament_name);
+    fprintf(file, "    \"total_teams\": %d,\n", total_teams);
+    fprintf(file, "    \"created_date\": \"%s\",\n", timestamp);
+    fprintf(file, "    \"format\": \"single_elimination\"\n");
+    fprintf(file, "  },\n");
+
+    // Teams section
+    fprintf(file, "  \"teams\": [\n");
     addressList current = head;
+    bool first_team = true;
     while (current != NULL) {
-        char namaTim[50];
-        strncpy(namaTim, current->namaTim, 49);
-        namaTim[49] = '\0';
-        fprintf(file, "[TEAM]\n");
-        fprintf(file, "ID: %d\n", current->id_tim);
-        fprintf(file, "Nama: %s\n", namaTim);
-        fprintf(file, "Laga: %d\n", current->laga);
-        fprintf(file, "Kemenangan: %d\n", current->kemenangan);
-        fprintf(file, "Kekalahan: %d\n", current->kekalahan);
-        fprintf(file, "[END]\n\n");
+        if (!first_team) {
+            fprintf(file, ",\n");
+        }
+        
+        char escaped_name[100];
+        escapeJsonString(current->namaTim, escaped_name);
+        
+        float win_rate = 0.0f;
+        if (current->laga > 0) {
+            win_rate = ((float)current->kemenangan / (float)current->laga) * 100.0f;
+        }
+        
+        fprintf(file, "    {\n");
+        fprintf(file, "      \"id\": %d,\n", current->id_tim);
+        fprintf(file, "      \"name\": \"%s\",\n", escaped_name);
+        fprintf(file, "      \"matches_played\": %d,\n", current->laga);
+        fprintf(file, "      \"wins\": %d,\n", current->kemenangan);
+        fprintf(file, "      \"losses\": %d,\n", current->kekalahan);
+        fprintf(file, "      \"win_rate\": %.1f\n", win_rate);
+        fprintf(file, "    }");
+        
+        first_team = false;
         current = current->next;
     }
+    fprintf(file, "\n  ],\n");
 
-    fclose(file);
-    printf("Data tim berhasil disimpan ke %s.\n", filename);
-}
-
-addressList loadTeamsFromFile(const char* filename) {
-    FILE* file = fopen(filename, "r");
-    if (file == NULL) {
-        printf("Gagal membuka file %s untuk membaca.\n", filename);
-        return NULL;
-    }
-
-    addressList head = NULL;
-    char line[256];
-    int id_tim = 0, laga = 0, kemenangan = 0, kekalahan = 0;
-    char namaTim[50] = "";
-    bool validBlock = false;
-    bool hasId = false, hasNama = false, hasLaga = false, hasKemenangan = false, hasKekalahan = false;
-
-    while (fgets(line, sizeof(line), file)) {
-        line[strcspn(line, "\n")] = '\0'; 
-
-        if (strcmp(line, "[TEAM]") == 0) {
-            validBlock = true;
-            hasId = hasNama = hasLaga = hasKemenangan = hasKekalahan = false;
-            id_tim = laga = kemenangan = kekalahan = 0;
-            namaTim[0] = '\0';
-            continue;
-        } else if (strcmp(line, "[END]") == 0 && validBlock) {
-            if (hasId && hasNama && hasLaga && hasKemenangan && hasKekalahan) {
-                addressList newNode = (addressList)malloc(sizeof(node));
-                if (newNode == NULL) {
-                    printf("Gagal mengalokasi memori untuk node tim.\n");
-                    DeAlokasi(&head);
-                    fclose(file);
-                    return NULL;
-                }
-                newNode->id_tim = id_tim;
-                strncpy(newNode->namaTim, namaTim, 49);
-                newNode->namaTim[49] = '\0';
-                newNode->laga = laga;
-                newNode->kemenangan = kemenangan;
-                newNode->kekalahan = kekalahan;
-                newNode->next = NULL;
-                insertAtLast(&head, newNode);
-            } else {
-                printf("Blok data tim tidak lengkap, melewati.\n");
+    // Matches section (dari history)
+    fprintf(file, "  \"match_history\": [\n");
+    if (!apakahStackKosong(history)) {
+        // Convert stack to array untuk reverse order
+        MatchResult matches[100]; // Asumsi max 100 matches
+        int match_count = 0;
+        
+        Stack tempStack;
+        inisialisasiStack(&tempStack);
+        MatchResult result;
+        
+        // Pop semua dari history ke temp stack (tanpa output debug)
+        while (pop(history, &result)) {
+            matches[match_count++] = result;
+            push(&tempStack, result);
+        }
+        
+        // Restore history (tanpa output debug)
+        while (pop(&tempStack, &result)) {
+            push(history, result);
+        }
+        
+        // Print matches dalam urutan chronological
+        for (int i = match_count - 1; i >= 0; i--) {
+            if (i < match_count - 1) {
+                fprintf(file, ",\n");
             }
-            validBlock = false;
-            continue;
-        }
-
-        if (validBlock) {
-            if (strncmp(line, "ID: ", 4) == 0 && sscanf(line + 4, "%d", &id_tim) == 1) {
-                hasId = true;
-            } else if (strncmp(line, "Nama: ", 6) == 0) {
-                strncpy(namaTim, line + 6, 49);
-                namaTim[49] = '\0';
-                hasNama = true;
-            } else if (strncmp(line, "Laga: ", 6) == 0 && sscanf(line + 6, "%d", &laga) == 1) {
-                hasLaga = true;
-            } else if (strncmp(line, "Kemenangan: ", 12) == 0 && sscanf(line + 12, "%d", &kemenangan) == 1) {
-                hasKemenangan = true;
-            } else if (strncmp(line, "Kekalahan: ", 11) == 0 && sscanf(line + 11, "%d", &kekalahan) == 1) {
-                hasKekalahan = true;
-            }
+            
+            fprintf(file, "    {\n");
+            fprintf(file, "      \"match_id\": %d,\n", matches[i].matchID);
+            fprintf(file, "      \"team1_id\": %d,\n", matches[i].team1Id);
+            fprintf(file, "      \"team2_id\": %d,\n", matches[i].team2Id);
+            fprintf(file, "      \"winner_id\": %d,\n", matches[i].idPemenang);
+            fprintf(file, "      \"round\": %d,\n", matches[i].nomorRonde);
+            fprintf(file, "      \"score\": {\n");
+            fprintf(file, "        \"team1\": %d,\n", matches[i].skorTim1);
+            fprintf(file, "        \"team2\": %d\n", matches[i].skorTim2);
+            fprintf(file, "      }\n");
+            fprintf(file, "    }");
         }
     }
+    fprintf(file, "\n  ],\n");
 
-    fclose(file);
-    if (head == NULL) {
-        printf("Tidak ada data tim yang berhasil dimuat dari %s.\n", filename);
-    } else {
-        printf("Data tim berhasil dimuat dari %s.\n", filename);
-    }
-    return head;
-}
+    // Tournament bracket structure
+    fprintf(file, "  \"bracket\": ");
+    saveBracketToJSON(file, root, 2);
+    
+    // Footer JSON
+    fprintf(file, "\n}\n");
 
-void saveMatchHistoryToFile(Stack* history, const char* filename) {
-    FILE* file = fopen(filename, "w");
-    if (file == NULL) {
-        printf("Gagal membuka file %s untuk menulis.\n", filename);
-        return;
-    }
-
-    if (apakahStackKosong(history)) {
-        printf("Riwayat pertandingan kosong, tidak ada data untuk disimpan.\n");
-        fclose(file);
-        return;
-    }
-
-    Stack tempStack;
-    inisialisasiStack(&tempStack);
-    MatchResult result;
-
-    while (pop(history, &result)) {
-        push(&tempStack, result);
-    }
-
-    while (pop(&tempStack, &result)) {
-        fprintf(file, "[MATCH]\n");
-        fprintf(file, "MatchID: %d\n", result.matchID);
-        fprintf(file, "Team1ID: %d\n", result.team1Id);
-        fprintf(file, "Team2ID: %d\n", result.team2Id);
-        fprintf(file, "PemenangID: %d\n", result.idPemenang);
-        fprintf(file, "Ronde: %d\n", result.nomorRonde);
-        fprintf(file, "SkorTim1: %d\n", result.skorTim1);
-        fprintf(file, "SkorTim2: %d\n", result.skorTim2);
-        fprintf(file, "[END]\n\n");
-        push(history, result); 
-    }
-
-    fclose(file);
-    printf("Riwayat pertandingan berhasil disimpan ke %s.\n", filename);
-}
-
-Stack* loadMatchHistoryFromFile(const char* filename) {
-    FILE* file = fopen(filename, "r");
-    if (file == NULL) {
-        printf("Gagal membuka file %s untuk membaca.\n", filename);
-        return NULL;
-    }
-
-    Stack* history = malloc(sizeof(Stack));
-    if (history == NULL) {
-        printf("Gagal mengalokasi memori untuk stack riwayat.\n");
-        fclose(file);
-        return NULL;
-    }
-    inisialisasiStack(history);
-
-    char line[256];
-    MatchResult result = {0};
-    bool validBlock = false;
-    bool hasMatchID = false, hasTeam1ID = false, hasTeam2ID = false, hasPemenangID = false;
-    bool hasRonde = false, hasSkorTim1 = false, hasSkorTim2 = false;
-
-    while (fgets(line, sizeof(line), file)) {
-        line[strcspn(line, "\n")] = '\0';
-
-        if (strcmp(line, "[MATCH]") == 0) {
-            validBlock = true;
-            hasMatchID = hasTeam1ID = hasTeam2ID = hasPemenangID = false;
-            hasRonde = hasSkorTim1 = hasSkorTim2 = false;
-            memset(&result, 0, sizeof(MatchResult));
-            continue;
-        } else if (strcmp(line, "[END]") == 0 && validBlock) {
-            if (hasMatchID && hasTeam1ID && hasTeam2ID && hasPemenangID && hasRonde && hasSkorTim1 && hasSkorTim2) {
-                push(history, result);
-            } else {
-                printf("Blok data pertandingan tidak lengkap, melewati.\n");
-            }
-            validBlock = false;
-            continue;
-        }
-
-        if (validBlock) {
-            if (strncmp(line, "MatchID: ", 9) == 0 && sscanf(line + 9, "%d", &result.matchID) == 1) {
-                hasMatchID = true;
-            } else if (strncmp(line, "Team1ID: ", 9) == 0 && sscanf(line + 9, "%d", &result.team1Id) == 1) {
-                hasTeam1ID = true;
-            } else if (strncmp(line, "Team2ID: ", 9) == 0 && sscanf(line + 9, "%d", &result.team2Id) == 1) {
-                hasTeam2ID = true;
-            } else if (strncmp(line, "PemenangID: ", 12) == 0 && sscanf(line + 12, "%d", &result.idPemenang) == 1) {
-                hasPemenangID = true;
-            } else if (strncmp(line, "Ronde: ", 7) == 0 && sscanf(line + 7, "%d", &result.nomorRonde) == 1) {
-                hasRonde = true;
-            } else if (strncmp(line, "SkorTim1: ", 10) == 0 && sscanf(line + 10, "%d", &result.skorTim1) == 1) {
-                hasSkorTim1 = true;
-            } else if (strncmp(line, "SkorTim2: ", 10) == 0 && sscanf(line + 10, "%d", &result.skorTim2) == 1) {
-                hasSkorTim2 = true;
-            }
-        }
-    }
-
-    fclose(file);
-    if (apakahStackKosong(history)) {
-        printf("Tidak ada riwayat pertandingan yang berhasil dimuat dari %s.\n", filename);
-        free(history);
-        return NULL;
-    }
-    printf("Riwayat pertandingan dimuat dari %s.\n", filename);
-    return history;
-}
-
-static void saveTreePreorder(FILE* file, addressTree treeNode) {
-    if (!treeNode) return;
-    fprintf(file, "[NODE]\n");
-    fprintf(file, "MatchID: %d\n", treeNode->match_id);
-    fprintf(file, "Team1ID: %d\n", treeNode->id_tim1);
-    fprintf(file, "Team2ID: %d\n", treeNode->id_tim2);
-    fprintf(file, "PemenangID: %d\n", treeNode->id_pemenang);
-    fprintf(file, "LeftID: %d\n", treeNode->left ? treeNode->left->match_id : 0);
-    fprintf(file, "RightID: %d\n", treeNode->right ? treeNode->right->match_id : 0);
-    fprintf(file, "[END]\n");
-    saveTreePreorder(file, treeNode->left);
-    saveTreePreorder(file, treeNode->right);
-}
-
-void saveTournamentTreeToFile(addressTree root, const char* filename) {
-    FILE* file = fopen(filename, "w");
-    if (file == NULL) {
-        printf("Gagal membuka file %s untuk menulis.\n", filename);
-        return;
-    }
-    if (root == NULL) {
-        printf("Pohon turnamen kosong, tidak ada data untuk disimpan.\n");
-        fclose(file);
-        return;
-    }
-    saveTreePreorder(file, root);
-    fclose(file);
-    printf("Pohon turnamen berhasil disimpan ke %s.\n", filename);
-}
-
-typedef struct {
-    int match_id, id_tim1, id_tim2, id_pemenang, left_id, right_id;
-    addressTree node;
-} TreeNodeTemp;
-
-addressTree loadTournamentTreeFromFile(const char* filename) {
-    FILE* file = fopen(filename, "r");
-    if (file == NULL) {
-        printf("Gagal membuka file %s untuk membaca.\n", filename);
-        return NULL;
-    }
-  
-    TreeNodeTemp tempNodes[64];
-    int count = 0;
-    char line[256];
-    int match_id=0, id_tim1=0, id_tim2=0, id_pemenang=0, left_id=0, right_id=0;
-    bool validBlock = false;
-    while (fgets(line, sizeof(line), file)) {
-        line[strcspn(line, "\n")] = '\0';
-        if (strcmp(line, "[NODE]") == 0) {
-            validBlock = true;
-            match_id = id_tim1 = id_tim2 = id_pemenang = left_id = right_id = 0;
-            continue;
-        } else if (strcmp(line, "[END]") == 0 && validBlock) {
-            if (count < 64) {
-                tempNodes[count].match_id = match_id;
-                tempNodes[count].id_tim1 = id_tim1;
-                tempNodes[count].id_tim2 = id_tim2;
-                tempNodes[count].id_pemenang = id_pemenang;
-                tempNodes[count].left_id = left_id;
-                tempNodes[count].right_id = right_id;
-                tempNodes[count].node = createTreeNode(id_tim1, id_tim2, match_id);
-                tempNodes[count].node->id_pemenang = id_pemenang;
-                count++;
-            }
-            validBlock = false;
-            continue;
-        }
-        if (validBlock) {
-            if (strncmp(line, "MatchID: ", 9) == 0) sscanf(line + 9, "%d", &match_id);
-            else if (strncmp(line, "Team1ID: ", 9) == 0) sscanf(line + 9, "%d", &id_tim1);
-            else if (strncmp(line, "Team2ID: ", 9) == 0) sscanf(line + 9, "%d", &id_tim2);
-            else if (strncmp(line, "PemenangID: ", 12) == 0) sscanf(line + 12, "%d", &id_pemenang);
-            else if (strncmp(line, "LeftID: ", 8) == 0) sscanf(line + 8, "%d", &left_id);
-            else if (strncmp(line, "RightID: ", 9) == 0) sscanf(line + 9, "%d", &right_id);
-        }
-    }
     fclose(file);
     
-    for (int i = 0; i < count; i++) {
-        if (tempNodes[i].left_id != 0) {
-            for (int j = 0; j < count; j++) {
-                if (tempNodes[j].match_id == tempNodes[i].left_id) {
-                    tempNodes[i].node->left = tempNodes[j].node;
-                    break;
-                }
-            }
-        }
-        if (tempNodes[i].right_id != 0) {
-            for (int j = 0; j < count; j++) {
-                if (tempNodes[j].match_id == tempNodes[i].right_id) {
-                    tempNodes[i].node->right = tempNodes[j].node;
-                    break;
-                }
-            }
-        }
+    // Output hanya jika diminta
+    if (show_output) {
+        printf("Data turnamen berhasil disimpan ke %s dalam format JSON.\n", filename);
     }
-    addressTree root = (count > 0) ? tempNodes[0].node : NULL;
-    if (root == NULL) {
-        printf("Tidak ada pohon turnamen yang berhasil dimuat dari %s.\n", filename);
+}
+
+// Fungsi helper untuk menyimpan bracket structure ke JSON - ganti nama parameter
+void saveBracketToJSON(FILE* file, addressTree treeNode, int indent) {
+    if (treeNode == NULL) {
+        fprintf(file, "null");
+        return;
+    }
+
+    char indent_str[50] = "";
+    for (int i = 0; i < indent; i++) {
+        strcat(indent_str, "  ");
+    }
+
+    fprintf(file, "{\n");
+    fprintf(file, "%s  \"match_id\": %d,\n", indent_str, treeNode->match_id);
+    fprintf(file, "%s  \"team1_id\": %d,\n", indent_str, treeNode->id_tim1);
+    fprintf(file, "%s  \"team2_id\": %d,\n", indent_str, treeNode->id_tim2);
+    fprintf(file, "%s  \"winner_id\": %d,\n", indent_str, treeNode->id_pemenang);
+    
+    if (treeNode->left != NULL || treeNode->right != NULL) {
+        fprintf(file, "%s  \"left_match\": ", indent_str);
+        saveBracketToJSON(file, treeNode->left, indent + 1);
+        fprintf(file, ",\n");
+        
+        fprintf(file, "%s  \"right_match\": ", indent_str);
+        saveBracketToJSON(file, treeNode->right, indent + 1);
+        fprintf(file, "\n");
     } else {
-        printf("Pohon turnamen berhasil dimuat dari %s.\n", filename);
+        fprintf(file, "%s  \"left_match\": null,\n", indent_str);
+        fprintf(file, "%s  \"right_match\": null\n", indent_str);
     }
-    return root;
+    
+    fprintf(file, "%s}", indent_str);
+}
+
+// Fungsi untuk memuat semua data turnamen dari JSON - fix conversion warnings
+TournamentData* loadTournamentFromJSON(const char* filename) {
+    FILE* file = fopen(filename, "r");
+    if (file == NULL) {
+        printf("Gagal membuka file %s untuk membaca.\n", filename);
+        return NULL;
+    }
+
+    // Baca seluruh file ke dalam buffer
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    
+    if (file_size <= 0) {
+        printf("File kosong atau error membaca ukuran file.\n");
+        fclose(file);
+        return NULL;
+    }
+    
+    char* json_content = malloc((size_t)file_size + 1);
+    if (json_content == NULL) {
+        printf("Gagal mengalokasi memori untuk membaca file.\n");
+        fclose(file);
+        return NULL;
+    }
+    
+    fread(json_content, 1, (size_t)file_size, file);
+    json_content[file_size] = '\0';
+    fclose(file);
+
+    // Parse JSON sederhana (manual parsing)
+    TournamentData* data = malloc(sizeof(TournamentData));
+    if (data == NULL) {
+        free(json_content);
+        return NULL;
+    }
+
+    // Initialize data
+    data->head = NULL;
+    data->root = NULL;
+    data->history = malloc(sizeof(Stack));
+    inisialisasiStack(data->history);
+    strcpy(data->tournament_name, "");
+
+    // Parse tournament info
+    parseJsonString(json_content, "name", data->tournament_name, sizeof(data->tournament_name));
+    
+    // Parse teams
+    data->head = parseJsonTeams(json_content);
+    
+    // Parse match history
+    parseJsonMatches(json_content, data->history);
+    
+    // Parse bracket (basic reconstruction)
+    data->root = parseJsonBracket(json_content);
+
+    free(json_content);
+    
+    if (data->head != NULL) {
+        printf("Data turnamen '%s' berhasil dimuat dari %s.\n", data->tournament_name, filename);
+        return data;
+    } else {
+        printf("Gagal memuat data turnamen dari %s.\n", filename);
+        free(data->history);
+        free(data);
+        return NULL;
+    }
+}
+
+// Fungsi helper untuk parsing JSON string value - fix conversion warning
+void parseJsonString(const char* json, const char* key, char* output, int max_len) {
+    char search_pattern[100];
+    snprintf(search_pattern, sizeof(search_pattern), "\"%s\": \"", key);
+    
+    char* start = strstr(json, search_pattern);
+    if (start == NULL) {
+        output[0] = '\0';
+        return;
+    }
+    
+    start += strlen(search_pattern);
+    char* end = strchr(start, '"');
+    if (end == NULL) {
+        output[0] = '\0';
+        return;
+    }
+    
+    ptrdiff_t len_diff = end - start;
+    if (len_diff < 0 || len_diff >= max_len) {
+        output[0] = '\0';
+        return;
+    }
+    
+    size_t len = (size_t)len_diff;
+    strncpy(output, start, len);
+    output[len] = '\0';
+}
+
+// Fungsi helper untuk parsing teams dari JSON - fix conversion warning
+addressList parseJsonTeams(const char* json) {
+    addressList head = NULL;
+    
+    char* teams_start = strstr(json, "\"teams\": [");
+    if (teams_start == NULL) return NULL;
+    
+    teams_start += strlen("\"teams\": [");
+    char* teams_end = strstr(teams_start, "],");
+    if (teams_end == NULL) return NULL;
+    
+    // Simple parsing - look for team objects
+    char* current = teams_start;
+    while (current < teams_end) {
+        char* team_start = strstr(current, "{");
+        if (team_start == NULL || team_start >= teams_end) break;
+        
+        char* team_end = strstr(team_start, "}");
+        if (team_end == NULL || team_end >= teams_end) break;
+        
+        // Parse team data
+        int id = 0, wins = 0, losses = 0, matches = 0;
+        char name[50] = "";
+        
+        // Extract values (simple parsing) - fix conversion warning
+        ptrdiff_t team_len_diff = team_end - team_start + 1;
+        if (team_len_diff <= 0 || team_len_diff > 500) {
+            current = team_end + 1;
+            continue;
+        }
+        
+        size_t team_len = (size_t)team_len_diff;
+        char team_json[500];
+        strncpy(team_json, team_start, team_len);
+        team_json[team_len] = '\0';
+        
+        // Parse each field
+        char* id_pos = strstr(team_json, "\"id\":");
+        if (id_pos != NULL) {
+            sscanf(id_pos, "\"id\": %d", &id);
+        }
+        
+        parseJsonString(team_json, "name", name, sizeof(name));
+        
+        char* wins_pos = strstr(team_json, "\"wins\":");
+        if (wins_pos != NULL) {
+            sscanf(wins_pos, "\"wins\": %d", &wins);
+        }
+        
+        char* losses_pos = strstr(team_json, "\"losses\":");
+        if (losses_pos != NULL) {
+            sscanf(losses_pos, "\"losses\": %d", &losses);
+        }
+        
+        char* matches_pos = strstr(team_json, "\"matches_played\":");
+        if (matches_pos != NULL) {
+            sscanf(matches_pos, "\"matches_played\": %d", &matches);
+        }
+        
+        // Create team node
+        addressList newNode = createNode(name);
+        if (newNode != NULL) {
+            newNode->id_tim = id;
+            newNode->laga = matches;
+            newNode->kemenangan = wins;
+            newNode->kekalahan = losses;
+            insertAtLast(&head, newNode);
+        }
+        
+        current = team_end + 1;
+    }
+    
+    return head;
 }
