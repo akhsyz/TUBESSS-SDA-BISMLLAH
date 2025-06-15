@@ -7,6 +7,7 @@ NIM : 241524039
 #define STACK_H
 
 #include "tree.h"
+#include "convention.h"  // Gunakan convention.h untuk konsistensi
 
 // Struktur data buat nyimpen hasil pertandingan 
 
@@ -33,12 +34,22 @@ typedef struct {
 } Stack;
 
 // Fungsi - fungsi dasar stack 
+// Gunakan boolean dari convention.h alih-alih bool
 
 void inisialisasiStack(Stack* s);
-bool apakahStackKosong(Stack* s);
+boolean apakahStackKosong(Stack* s);
 void push(Stack* s, MatchResult data);
-bool pop(Stack* s, MatchResult* result);
-bool peek(Stack* s, MatchResult* result);
+boolean pop(Stack* s, MatchResult* result);
+boolean peek(Stack* s, MatchResult* result);
 void clearStack(Stack* s);
 int getStackSize(Stack* s);
+
+// untuk kompatibilitas dengan tournament.c
+#define initStack inisialisasiStack
+#define isStackEmpty apakahStackKosong
+#define pushStack(s, match_id, winner_id) do { \
+    MatchResult result = {match_id, 0, 0, winner_id, 0, 0, 0}; \
+    push(s, result); \
+} while(0)
+
 #endif
