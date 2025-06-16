@@ -15,14 +15,27 @@ void enqueue(Queue *Q, addressList teamNode) {
         printf("Node tidak valid untuk enqueue.\n");
         return;
     }
-    insertAtLast(&(Q->head), teamNode);
-
-    if (Q->tail == NULL) {
-        Q->tail = teamNode;
+    
+    // Buat copy node untuk queue agar tidak mengganggu linked list asli
+    addressList newNode = (addressList)malloc(sizeof(addressList));
+    if (newNode == NULL) {
+        printf("Gagal mengalokasi memori untuk queue node.\n");
+        return;
+    }
+    
+    // Copy data dari teamNode
+    newNode->id_tim = teamNode->id_tim;
+    strcpy(newNode->namaTim, teamNode->namaTim);
+    newNode->next = NULL;
+    
+    // Jika queue kosong
+    if (Q->head == NULL) {
+        Q->head = newNode;
+        Q->tail = newNode;
     } else {
-        addressList temp = Q->head;
-        while (temp->next != NULL) temp = temp->next;
-        Q->tail = temp;
+        // Tambahkan di akhir queue
+        Q->tail->next = newNode;
+        Q->tail = newNode;
     }
 }
 
@@ -31,10 +44,16 @@ void dequeue(Queue *Q) {
         printf("Queue kosong.\n");
         return;
     }
-    deleteFirst(&(Q->head)); 
+    
+    addressList temp = Q->head;
+    Q->head = Q->head->next;
+    
+    // Jika queue menjadi kosong setelah dequeue
     if (Q->head == NULL) {
-        Q->tail = NULL; 
+        Q->tail = NULL;
     }
+    
+    free(temp);
 }
 
 void reverseQueue(Queue *Q) {
@@ -55,4 +74,27 @@ void reverseQueue(Queue *Q) {
     }
 
     Q->head = prev; 
+}
+
+// Fungsi helper untuk membersihkan queue
+void clearQueue(Queue *Q) {
+    while (Q->head != NULL) {
+        dequeue(Q);
+    }
+}
+
+// Fungsi helper untuk menampilkan isi queue
+void displayQueue(Queue *Q) {
+    if (Q->head == NULL) {
+        printf("Queue kosong.\n");
+        return;
+    }
+    
+    printf("Isi Queue:\n");
+    addressList temp = Q->head;
+    int index = 1;
+    while (temp != NULL) {
+        printf("%d. %s (ID: %d)\n", index++, temp->namaTim, temp->id_tim);
+        temp = temp->next;
+    }
 }

@@ -17,5 +17,7 @@ void initQueue(Queue *Q);
 void enqueue(Queue *Q, addressList node);
 void dequeue(Queue *Q);
 void reverseQueue(Queue *Q);
+void clearQueue(Queue *Q);
+void displayQueue(Queue *Q);
 
 #endif
