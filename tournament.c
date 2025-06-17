@@ -10,24 +10,23 @@ void tambahTim(addressList *head) {
     printf("Masukkan jumlah tim: ");
     if (scanf("%d", &jmlTim) != 1 || jmlTim <= 0) {
         printf("Jumlah tim tidak valid.\n");
-        while (getchar() != '\n'); // Bersihkan buffer
+        while (getchar() != '\n'); 
         return;
     }
-    while (getchar() != '\n'); // Bersihkan buffer setelah input angka
+    while (getchar() != '\n');
     
-    char namaTim[50];
+    char namaTim[9];
     for (int i = 0; i < jmlTim; i++) {
         printf("Nama Tim %d: ", i + 1);
-        if (scanf(" %49[^\n]", namaTim) != 1) {
+        if (scanf(" %8[^\n]", namaTim) != 1) {
             printf("Input nama tim tidak valid.\n");
-            while (getchar() != '\n'); // Bersihkan buffer
+            while (getchar() != '\n'); 
             return;
         }
         
-        // Cek apakah tim sudah ada
         if (searchNode(*head, namaTim) != NULL) {
             printf("Tim %s sudah terdaftar! Masukkan nama tim yang berbeda.\n", namaTim);
-            i--; // Ulangi input untuk indeks yang sama
+            i--; 
             continue;
         }
         
@@ -43,19 +42,17 @@ void hapusTim(addressList *head) {
         return;
     }
     
-    // Tampilkan daftar tim terlebih dahulu
     printf("Daftar tim yang terdaftar:\n");
     displayLinkedList(*head);
     
-    char namaTim[50];
+    char namaTim[9];
     printf("Pilih Tim yang ingin dihapus: ");
-    if (scanf(" %49[^\n]", namaTim) != 1) {
+    if (scanf(" %8[^\n]", namaTim) != 1) {
         printf("Input nama tim tidak valid.\n");
-        while (getchar() != '\n'); // Bersihkan buffer
+        while (getchar() != '\n'); 
         return;
     }
     
-    // Cek apakah tim ada sebelum menghapus
     if (searchNode(*head, namaTim) == NULL) {
         printf("Tim %s tidak ditemukan dalam daftar.\n", namaTim);
         return;
@@ -63,16 +60,18 @@ void hapusTim(addressList *head) {
     
     deleteValue(head, namaTim);
     printf("Tim %s telah dihapus.\n", namaTim);
+    
+    printf("\nDaftar tim setelah penghapusan:\n");
+    displayLinkedList(*head);
 }
 
-void jadwalkanPertandingan(addressList head, Queue *matchQueue, addressTree *tournamentTree) {
+void jadwalkanPertandingan(addressList head, Queue *matchQueue, TournamentTree **tournamentTree, Stack *matchHistory) {
     printf("\n\033[1;36m");
     printf("==============================================================\n");
     printf("                 PENJADWALAN PERTANDINGAN                    \n");
     printf("==============================================================\n");
     printf("\033[0m");
     
-    // Validasi jumlah tim
     int total_teams = countNode(head);
     printf("\nTotal tim terdaftar: \033[1;33m%d\033[0m\n", total_teams);
     
@@ -82,13 +81,12 @@ void jadwalkanPertandingan(addressList head, Queue *matchQueue, addressTree *tou
         return;
     }
     
-    if (total_teams > 10) {
-        printf("\n\033[1;31mError: Maksimal 10 tim yang dapat berpartisipasi!\033[0m\n");
+    if (total_teams > 12) {
+        printf("\n\033[1;31mError: Maksimal 12 tim yang dapat berpartisipasi!\033[0m\n");
         printf("Silakan hapus beberapa tim terlebih dahulu melalui Menu 2.\n");
         return;
     }
     
-    // Tampilkan daftar tim peserta secara ringkas
     printf("\n\033[1;32mTim Peserta:\033[0m\n");
     addressList temp = head;
     int count = 1;
@@ -97,54 +95,62 @@ void jadwalkanPertandingan(addressList head, Queue *matchQueue, addressTree *tou
         temp = temp->next;
     }
     
-    // Cek apakah sudah ada turnamen yang berjalan
     if (*tournamentTree != NULL) {
         char konfirmasi;
         printf("\n\033[1;33mTurnamen sudah dijadwalkan sebelumnya.\033[0m\n");
         printf("Apakah Anda ingin membuat turnamen baru? (y/n): ");
         scanf(" %c", &konfirmasi);
-        while (getchar() != '\n'); // Bersihkan buffer
+        while (getchar() != '\n'); 
         
         if (konfirmasi != 'y' && konfirmasi != 'Y') {
             printf("Penjadwalan dibatalkan.\n");
             return;
         }
         
-        // Bersihkan turnamen lama
-        clearTree(tournamentTree);
-        printf("Turnamen lama telah dihapus.\n");
+        printf("\033[1;33m\nMereset data turnamen lama...\033[0m\n");
+        clearTournamentTree(tournamentTree);
+        resetAllTeamStatsSilent(head);
+        
+        if (matchHistory != NULL) {
+            clearStackSilent(matchHistory);
+        }
+        
+        clearQueue(matchQueue);
+        
+        printf("\033[1;32mData turnamen lama telah dihapus dan direset!\033[0m\n");
+    } else {
+        resetAllTeamStatsSilent(head);
+        if (matchHistory != NULL && !apakahStackKosong(matchHistory)) {
+            clearStackSilent(matchHistory);
+        }
+        clearQueue(matchQueue);
     }
-    
-    printf("\n\033[1;34mMemproses penjadwalan untuk %d tim...\033[0m\n", total_teams);
-    
-    // Bersihkan queue yang lama
     clearQueue(matchQueue);
     
-    // Masukkan semua tim ke dalam queue (tanpa tampilan verbose)
     temp = head;
     while (temp != NULL) {
         enqueue(matchQueue, temp);
         temp = temp->next;
     }
     
-    // Bangun tournament tree
-    *tournamentTree = buildTournamentTree(matchQueue, total_teams, head);
+    *tournamentTree = buildTournamentTreeWithMeta(matchQueue, total_teams, head);
     
-    if (*tournamentTree == NULL) {
+    if (*tournamentTree == NULL || (*tournamentTree)->root == NULL) {
         printf("\n\033[1;31mGagal membuat struktur turnamen!\033[0m\n");
         printf("Silakan coba lagi atau periksa data tim.\n");
         return;
     }
     
-    // Hitung informasi turnamen
     int rounds = 0;
     int temp_teams = total_teams;
     while (temp_teams > 1) {
-        temp_teams = (temp_teams + 1) / 2;
+        temp_teams = (temp_teams + 1) / 2; 
         rounds++;
     }
     
-    // Tampilan sukses yang rapi
+    setTournamentMetadata(*tournamentTree, total_teams, "Single Elimination");
+    (*tournamentTree)->meta.total_rounds = rounds;
+    
     printf("\n\033[1;32m");
     printf("==============================================================\n");
     printf("                   PENJADWALAN BERHASIL!                     \n");
@@ -156,13 +162,11 @@ void jadwalkanPertandingan(addressList head, Queue *matchQueue, addressTree *tou
     printf("==============================================================\n");
     printf("\033[0m");
     
-    // Tampilkan pertandingan babak pertama yang siap dimainkan
     printf("\n\033[1;35mPertandingan Siap Dimainkan:\033[0m\n");
     printf("==============================================================\n");
-    tampilkanPertandinganSiapRapi(*tournamentTree, head, 1);
+    tampilkanPertandinganSiapRapi((*tournamentTree)->root, head, 1);
     printf("==============================================================\n");
     
-    // Menu panduan
     printf("\n\033[1;36mMenu yang tersedia sekarang:\033[0m\n");
     printf("   Menu 5: Input Hasil Pertandingan\n");
     printf("   Menu 7: Lihat Bagan Pertandingan\n");
@@ -170,16 +174,12 @@ void jadwalkanPertandingan(addressList head, Queue *matchQueue, addressTree *tou
     printf("   Menu 9: Lihat Riwayat Pertandingan\n");
 }
 
-// PERBAIKAN: Fungsi helper untuk menampilkan pertandingan yang siap dimainkan dengan format rapi
 void tampilkanPertandinganSiapRapi(addressTree root, addressList head, int target_round) {
     if (root == NULL) return;
     
     int current_round = calculateRoundNumber(root, root->match_id, NULL);
-    
-    // Tampilkan pertandingan yang siap dimainkan di round target
     if (current_round == target_round) {
         if (root->id_tim1 > 0 && root->id_tim2 > 0 && root->id_pemenang == 0) {
-            // Dapatkan nama tim
             addressList tim1 = searchNodeById(head, root->id_tim1);
             addressList tim2 = searchNodeById(head, root->id_tim2);
             
@@ -200,7 +200,6 @@ void tampilkanPertandinganSiapRapi(addressTree root, addressList head, int targe
                        root->match_id, root->id_pemenang);
             }
         } else if (root->id_tim1 == 0 || root->id_tim2 == 0) {
-            // Salah satu tim BYE
             int winner = (root->id_tim1 != 0) ? root->id_tim1 : root->id_tim2;
             if (winner != 0) {
                 addressList tim_winner = searchNodeById(head, winner);
@@ -217,8 +216,6 @@ void tampilkanPertandinganSiapRapi(addressTree root, addressList head, int targe
                    root->match_id);
         }
     }
-    
-    // Rekursi untuk child nodes
     tampilkanPertandinganSiapRapi(root->left, head, target_round);
     tampilkanPertandinganSiapRapi(root->right, head, target_round);
 }
@@ -228,8 +225,6 @@ void tampilkanPertandinganSiap(addressTree root, int target_round) {
     if (root == NULL) return;
     
     int current_round = calculateRoundNumber(root, root->match_id, NULL);
-    
-    // Tampilkan pertandingan yang siap dimainkan di round target
     if (current_round == target_round) {
         if (root->id_tim1 > 0 && root->id_tim2 > 0 && root->id_pemenang == 0) {
             printf("   Match %d: Tim %d vs Tim %d\n", 
@@ -238,7 +233,6 @@ void tampilkanPertandinganSiap(addressTree root, int target_round) {
             printf("   Match %d: SELESAI - Pemenang: Tim %d\n", 
                    root->match_id, root->id_pemenang);
         } else if (root->id_tim1 == 0 || root->id_tim2 == 0) {
-            // Salah satu tim BYE
             int winner = (root->id_tim1 != 0) ? root->id_tim1 : root->id_tim2;
             if (winner != 0) {
                 printf("   Match %d: Tim %d (BYE) - Lolos Otomatis\n", 
@@ -249,20 +243,15 @@ void tampilkanPertandinganSiap(addressTree root, int target_round) {
                    root->match_id);
         }
     }
-    
-    // Rekursi untuk child nodes
     tampilkanPertandinganSiap(root->left, target_round);
     tampilkanPertandinganSiap(root->right, target_round);
 }
 
-// Fungsi helper untuk menampilkan pertandingan yang tersedia
 void tampilkanPertandinganTersedia(addressTree root, addressList head) {
     if (root == NULL) return;
     
-    // Cek apakah pertandingan ini bisa dimainkan
     if (root->id_tim1 > 0 && root->id_tim2 > 0 && root->id_pemenang == 0) {
         int round = calculateRoundNumber(root, root->match_id, NULL);
-        
         addressList tim1 = searchNodeById(head, root->id_tim1);
         addressList tim2 = searchNodeById(head, root->id_tim2);
         
@@ -274,17 +263,13 @@ void tampilkanPertandinganTersedia(addressTree root, addressList head) {
                    root->match_id, round, root->id_tim1, root->id_tim2);
         }
     }
-    
-    // Rekursi untuk child nodes
     tampilkanPertandinganTersedia(root->left, head);
     tampilkanPertandinganTersedia(root->right, head);
 }
 
-// Fungsi helper untuk mengecek status turnamen
 void cekStatusTurnamen(addressTree root) {
     if (root == NULL) return;
     
-    // Cek apakah turnamen sudah selesai (final sudah ada pemenang)
     if (root->left == NULL && root->right == NULL) {
         return;
     }
@@ -295,13 +280,12 @@ void cekStatusTurnamen(addressTree root) {
     } else {
         printf(" Turnamen masih berlangsung...\n");
         printf("Pertandingan yang bisa dimainkan:\n");
-        tampilkanPertandinganTersedia(root, NULL); // Pass NULL untuk backward compatibility
+        tampilkanPertandinganTersedia(root, NULL);
     }
 }
 
-// IMPLEMENTASI fungsi utility yang missing
 char* getNamaTim(int id_tim, addressList head) {
-    static char nama[50]; // Static untuk return value yang persisten
+    static char nama[50];
     addressList temp = searchNodeById(head, id_tim);
     if (temp != NULL) {
         strcpy(nama, temp->namaTim);
@@ -333,66 +317,72 @@ void tampilkanInfoPertandingan(addressTree match, addressList head) {
     printf("========================\n");
 }
 
-// FUNGSI UTAMA: tampilkanBracket yang diperbaiki dengan integrasi template
-void tampilkanBracket(addressTree root, addressList head) {
-    if (root == NULL) {
+void tampilkanBracket(TournamentTree *tournamentTree, addressList head) {
+    if (tournamentTree == NULL || tournamentTree->root == NULL) {
         printf("\n\033[1;31mTurnamen belum dijadwalkan!\033[0m\n");
         printf("Silakan jadwalkan turnamen terlebih dahulu melalui Menu 4.\n");
         return;
     }
     
-    int total_teams = countNode(head);
+    int tournament_teams = getTournamentParticipants(tournamentTree);
+    int current_teams = countNode(head);
     
     printf("\n\033[1;36m");
     printf("========================================================\n");
     printf("                   BAGAN PERTANDINGAN                  \n");
-    printf("                   TURNAMEN %d TIM                      \n", total_teams);
+    printf("                   TURNAMEN %d TIM                      \n", tournament_teams);
     printf("========================================================\n");
     printf("\033[0m");
     
-    // Untuk sementara, gunakan Stack kosong untuk compatibility dengan templatebagan
+    if (current_teams != tournament_teams) {
+        printf("\033[1;33m");
+        printf("!!! PERHATIAN: Jumlah tim berubah setelah penjadwalan !!!\n");
+        printf("   - Tim saat penjadwalan: %d tim\n", tournament_teams);
+        printf("   - Tim terdaftar saat ini: %d tim\n", current_teams);
+        printf("   - Untuk menggunakan tim baru, lakukan penjadwalan ulang (Menu 4)\n");
+        printf("========================================================\n");
+        printf("\033[0m");
+    }
+    
     Stack tempStack;
     tempStack.top = NULL;
     tempStack.size = 0;
     
-    switch(total_teams) {
+    switch(tournament_teams) {
         case 3:
-            templatebagan3tim(root, head, &tempStack);
+            templatebagan3tim(tournamentTree->root, head, &tempStack);
             break;
         case 4:
-            templatebagan4tim(root, head, &tempStack);
+            templatebagan4tim(tournamentTree->root, head, &tempStack);
             break;
         case 5:
-            templatebagan5tim(root, head, &tempStack);
+            templatebagan5tim(tournamentTree->root, head, &tempStack);
             break;
         case 6:
-            templatebagan6tim(root, head, &tempStack);
+            templatebagan6tim(tournamentTree->root, head, &tempStack);
             break;
         case 7:
-            templatebagan7tim(root, head, &tempStack);
+            templatebagan7tim(tournamentTree->root, head, &tempStack);
             break;
         case 8:
-            templatebagan8tim(root, head, &tempStack);
+            templatebagan8tim(tournamentTree->root, head, &tempStack);
             break;
         case 9:
-            templatebagan9tim(root, head, &tempStack);
+            templatebagan9tim(tournamentTree->root, head, &tempStack);
             break;
         case 10:
-            templatebagan10tim(root, head, &tempStack);
+            templatebagan10tim(tournamentTree->root, head, &tempStack);
             break;
+        case 11:
+            templatebagan11tim(tournamentTree->root, head, &tempStack);
+            break;
+        case 12:
+            templatebagan12tim(tournamentTree->root, head, &tempStack);
+            break;
+        
         default:
-            // Fallback untuk jumlah tim yang tidak didukung template
             printf("\n\033[1;33m=== TAMPILAN UMUM ===\033[0m\n");
-            
-            // Hitung jumlah babak
-            int rounds = 0;
-            int temp_teams = total_teams;
-            while (temp_teams > 1) {
-                temp_teams = (temp_teams + 1) / 2;
-                rounds++;
-            }
-            
-            // Tampilkan setiap babak
+            int rounds = tournamentTree->meta.total_rounds;
             for (int round = 1; round <= rounds; round++) {
                 char round_name[20];
                 if (rounds == 1) {
@@ -408,15 +398,14 @@ void tampilkanBracket(addressTree root, addressList head) {
                 }
                 
                 printf("\n\033[1;34m=== %s ===\033[0m\n", round_name);
-                tampilkanPertandinganRound(root, head, round);
+                tampilkanPertandinganRound(tournamentTree->root, head, round);
             }
             break;
     }
     
-    // Tampilkan pemenang turnamen jika sudah selesai
-    if (root->id_pemenang != 0) {
+    if (tournamentTree->root->id_pemenang != 0) {
         char juara[20];
-        getTeamName(root->id_pemenang, head, juara);
+        getTeamName(tournamentTree->root->id_pemenang, head, juara);
         printf("\n\033[1;32m");
         printf("========================================================\n");
         printf("                   JUARA TURNAMEN                      \n");
@@ -436,14 +425,12 @@ void tampilkanBracket(addressTree root, addressList head) {
     printf("\033[0m");
 }
 
-// Fungsi helper baru untuk menampilkan pertandingan per round (fallback)
 void tampilkanPertandinganRound(addressTree root, addressList head, int target_round) {
     if (root == NULL) return;
     
     int current_round = calculateRoundNumber(root, root->match_id, NULL);
     
     if (current_round == target_round) {
-        // Dapatkan nama tim
         char tim1_name[20] = "BYE";
         char tim2_name[20] = "BYE";
         
@@ -470,7 +457,6 @@ void tampilkanPertandinganRound(addressTree root, addressList head, int target_r
         printf("   \033[1;37mMatch %d:\033[0m %-15s vs %-15s", 
                root->match_id, tim1_name, tim2_name);
         
-        // Status pertandingan dengan warna
         if (root->id_pemenang != 0) {
             addressList pemenang = searchNodeById(head, root->id_pemenang);
             printf("   \033[1;32m[SELESAI - %s]\033[0m", 
@@ -490,14 +476,11 @@ void tampilkanPertandinganRound(addressTree root, addressList head, int target_r
 void tampilkanBracketDetailed(addressTree root, addressList head, int depth) {
     if (root == NULL) return;
     
-    // Indentasi berdasarkan depth
     for (int i = 0; i < depth; i++) {
         printf("  ");
     }
     
-    // Tampilkan info pertandingan dengan nama tim
     if (root->left == NULL && root->right == NULL) {
-        // Leaf node - pertandingan actual
         char* nama1 = getNamaTim(root->id_tim1, head);
         char* nama2 = getNamaTim(root->id_tim2, head);
         printf("Match %d: %s vs %s", root->match_id, nama1, nama2);
@@ -507,9 +490,23 @@ void tampilkanBracketDetailed(addressTree root, addressList head, int depth) {
         }
         printf("\n");
     } else {
-        // Internal node
         printf("Round Match %d\n", root->match_id);
         if (root->left) tampilkanBracketDetailed(root->left, head, depth + 1);
         if (root->right) tampilkanBracketDetailed(root->right, head, depth + 1);
     }
+}
+
+boolean verifyTournamentReset(addressList head, Stack *matchHistory) {
+    if (!apakahStackKosong(matchHistory)) {
+        return false;
+    }
+    
+    addressList temp = head;
+    while (temp != NULL) {
+        if (temp->laga != 0 || temp->kemenangan != 0 || temp->kekalahan != 0) {
+            return false;
+        }
+        temp = temp->next;
+    }
+    return true;
 }
