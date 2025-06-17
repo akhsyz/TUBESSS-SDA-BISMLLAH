@@ -1,6 +1,5 @@
 #include "results.h"
 
-// TAMBAHAN: Fungsi helper untuk menampilkan pertandingan tersedia
 static void tampilkanPertandinganTersediaHelper(addressTree root, addressList head) {
     if (root == NULL) return;
     
@@ -26,7 +25,6 @@ static void tampilkanPertandinganTersediaHelper(addressTree root, addressList he
     tampilkanPertandinganTersediaHelper(root->right, head);
 }
 
-// PERBAIKAN: Fungsi tampilkanStatistik dengan tampilan yang lebih rapi dan tanpa simbol bermasalah
 void tampilkanStatistik(addressList head) {
     if (head == NULL) {
         printf("Daftar tim kosong.\n");
@@ -97,7 +95,6 @@ void tampilkanStatistik(addressList head) {
     printf("================================================================================\n");
     printf("\033[0m");
     
-    // PERBAIKAN: Informasi tambahan tanpa simbol bermasalah
     printf("\n\033[1;33m"); // Yellow bold
     printf("Ringkasan Turnamen:\n");
     printf("   - Total Tim: %d\n", total_teams);
@@ -106,7 +103,6 @@ void tampilkanStatistik(addressList head) {
     printf("\033[0m");
 }
 
-// PERBAIKAN UTAMA: Fungsi tampilkanHistori dengan nama tim yang benar
 void tampilkanHistori(Stack *s) {
     if (apakahStackKosong(s)) {
         printf("Riwayat pertandingan kosong.\n");
@@ -155,7 +151,6 @@ void tampilkanHistori(Stack *s) {
     printf("\033[0m");
 }
 
-// TAMBAHAN: Fungsi tampilkanHistori yang menerima parameter head untuk menampilkan nama tim
 void tampilkanHistoriDenganNama(Stack *s, addressList head) {
     if (apakahStackKosong(s)) {
         printf("Riwayat pertandingan kosong.\n");
@@ -239,8 +234,6 @@ void inputMatchResult(addressTree *tournamentTree, addressList head, Stack *matc
     printf("           INPUT HASIL PERTANDINGAN           \n");
     printf("===============================================\n");
     printf("\033[0m");
-    
-    // TAMBAHAN: Tampilkan daftar pertandingan yang tersedia dulu
     printf("\nPertandingan yang dapat dimainkan:\n");
     printf("===============================================\n");
     tampilkanPertandinganTersediaHelper(*tournamentTree, head);
@@ -278,3 +271,260 @@ void inputMatchResult(addressTree *tournamentTree, addressList head, Stack *matc
         return;
     }
     
+    addressList tim1 = searchNodeById(head, matchNode->id_tim1);
+    addressList tim2 = searchNodeById(head, matchNode->id_tim2);
+    
+    if (tim1 == NULL || tim2 == NULL) {
+        printf("Error: Data tim tidak ditemukan!\n");
+        return;
+    }
+    
+    printf("\nDetail Pertandingan %d:\n", match_id);
+    printf("===============================================\n");
+    printf("Tim 1: %s (ID: %d)\n", tim1->namaTim, tim1->id_tim);
+    printf("Tim 2: %s (ID: %d)\n", tim2->namaTim, tim2->id_tim);
+    printf("===============================================\n");
+    
+    char namaPemenang[50];
+    printf("\nMasukkan nama tim pemenang: ");
+    if (scanf(" %49[^\n]", namaPemenang) != 1) {
+        printf("Input nama pemenang tidak valid.\n");
+        while (getchar() != '\n');
+        return;
+    }
+    while (getchar() != '\n');
+    
+    int id_pemenang = 0;
+    if (strcmp(namaPemenang, tim1->namaTim) == 0) {
+        id_pemenang = tim1->id_tim;
+    } else if (strcmp(namaPemenang, tim2->namaTim) == 0) {
+        id_pemenang = tim2->id_tim;
+    } else {
+        printf("Error: Nama tim pemenang tidak valid!\n");
+        printf("Pilihan yang tersedia: '%s' atau '%s'\n", tim1->namaTim, tim2->namaTim);
+        return;
+    }
+    
+    // Input skor dengan validasi berulang sampai konsisten
+    int input_valid = 0;
+    while (!input_valid) {
+        printf("Masukkan skor untuk %s: ", tim1->namaTim);
+        if (scanf("%d", &skor1) != 1) {
+            printf("Skor tidak valid.\n");
+            while (getchar() != '\n');
+            continue;
+        }
+        
+        printf("Masukkan skor untuk %s: ", tim2->namaTim);
+        if (scanf("%d", &skor2) != 1) {
+            printf("Skor tidak valid.\n");
+            while (getchar() != '\n');
+            continue;
+        }
+        while (getchar() != '\n');
+        
+        if (skor1 < 0 || skor2 < 0) {
+            printf("Error: Skor tidak boleh negatif!\n");
+            printf("Silakan input ulang skor yang valid.\n\n");
+            continue;
+        }
+        
+        if (id_pemenang == tim1->id_tim && skor1 <= skor2) {
+            printf("Error: Skor tidak konsisten dengan pemenang!\n");
+            printf("Tim pemenang: %s, tetapi skor %s (%d) <= skor %s (%d)\n", 
+                   tim1->namaTim, tim1->namaTim, skor1, tim2->namaTim, skor2);
+            printf("Pemenang harus memiliki skor lebih tinggi dari lawan.\n");
+            
+            char pilihan;
+            printf("\nPilihan:\n");
+            printf("1. Input ulang skor (r)\n");
+            printf("2. Ganti pemenang (c)\n");
+            printf("3. Batalkan input (b)\n");
+            printf("Pilih (r/c/b): ");
+            scanf(" %c", &pilihan);
+            while (getchar() != '\n');
+            
+            if (pilihan == 'c' || pilihan == 'C') {
+                printf("Mengganti pemenang menjadi %s\n", tim2->namaTim);
+                id_pemenang = tim2->id_tim;
+                input_valid = 1;
+            } else if (pilihan == 'b' || pilihan == 'B') {
+                printf("Input hasil pertandingan dibatalkan.\n");
+                return;
+            } else {
+                printf("Input ulang skor...\n\n");
+                // Loop akan berlanjut untuk input ulang
+            }
+        } else if (id_pemenang == tim2->id_tim && skor2 <= skor1) {
+            printf("Error: Skor tidak konsisten dengan pemenang!\n");
+            printf("Tim pemenang: %s, tetapi skor %s (%d) <= skor %s (%d)\n", 
+                   tim2->namaTim, tim2->namaTim, skor2, tim1->namaTim, skor1);
+            printf("Pemenang harus memiliki skor lebih tinggi dari lawan.\n");
+            
+            char pilihan;
+            printf("\nPilihan:\n");
+            printf("1. Input ulang skor (r)\n");
+            printf("2. Ganti pemenang (c)\n");
+            printf("3. Batalkan input (b)\n");
+            printf("Pilih (r/c/b): ");
+            scanf(" %c", &pilihan);
+            while (getchar() != '\n');
+            
+            if (pilihan == 'c' || pilihan == 'C') {
+                printf("Mengganti pemenang menjadi %s\n", tim1->namaTim);
+                id_pemenang = tim1->id_tim;
+                input_valid = 1;
+            } else if (pilihan == 'b' || pilihan == 'B') {
+                printf("Input hasil pertandingan dibatalkan.\n");
+                return;
+            } else {
+                printf("Input ulang skor...\n\n");
+                // Loop akan berlanjut untuk input ulang
+            }
+        } else if (skor1 == skor2) {
+            printf("Error: Skor tidak boleh seri/sama!\n");
+            printf("Dalam sistem eliminasi, harus ada pemenang yang jelas.\n");
+            printf("Silakan input skor yang berbeda.\n\n");
+            // Loop akan berlanjut untuk input ulang
+        } else {
+            // Skor valid dan konsisten
+            input_valid = 1;
+        }
+    }
+    
+    // Update hasil pertandingan
+    updateMatchResult(*tournamentTree, match_id, id_pemenang, skor1, skor2, head, matchHistory);
+    
+    printf("\n\033[1;32m");
+    printf("===============================================\n");
+    printf("        HASIL PERTANDINGAN BERHASIL DISIMPAN! \n");
+    printf("===============================================\n");
+    printf("\033[0m");
+    addressList pemenang = searchNodeById(head, id_pemenang);
+    printf("Pemenang: %s (ID: %d)\n", pemenang->namaTim, id_pemenang);
+    printf("Skor: %s %d - %d %s\n", tim1->namaTim, skor1, skor2, tim2->namaTim);
+    printf("Hasil pertandingan telah diperbarui.\n");
+    printf("===============================================\n");
+}
+
+void undoMatchResult(addressTree *tournamentTree, addressList head, Stack *matchHistory) {
+    MatchResult result;
+    if (!pop(matchHistory, &result)) {
+        printf("Tidak ada pertandingan untuk diundo.\n");
+        return;
+    }
+
+    addressTree match = findMatchNode(*tournamentTree, result.matchID);
+    if (match == NULL) {
+        printf("Pertandingan dengan ID %d tidak ditemukan untuk diundo.\n", result.matchID);
+        return;
+    }
+
+    // Reset pemenang pertandingan
+    match->id_pemenang = 0;
+
+    addressList tim1 = searchNodeById(head, result.team1Id);
+    addressList tim2 = searchNodeById(head, result.team2Id);
+    
+    if (tim1 != NULL && result.team1Id != 0) {
+        // Jika tim1 menang, kurangi kemenangan dan laga
+        // Jika tim1 kalah, kurangi kekalahan dan laga
+        if (result.idPemenang == result.team1Id) {
+            tim1->kemenangan = (tim1->kemenangan > 0) ? tim1->kemenangan - 1 : 0;
+        } else {
+            tim1->kekalahan = (tim1->kekalahan > 0) ? tim1->kekalahan - 1 : 0;
+        }
+        tim1->laga = (tim1->laga > 0) ? tim1->laga - 1 : 0;
+    }
+    
+    if (tim2 != NULL && result.team2Id != 0) {
+        // Jika tim2 menang, kurangi kemenangan dan laga
+        // Jika tim2 kalah, kurangi kekalahan dan laga
+        if (result.idPemenang == result.team2Id) {
+            tim2->kemenangan = (tim2->kemenangan > 0) ? tim2->kemenangan - 1 : 0;
+        } else {
+            tim2->kekalahan = (tim2->kekalahan > 0) ? tim2->kekalahan - 1 : 0;
+        }
+        tim2->laga = (tim2->laga > 0) ? tim2->laga - 1 : 0;
+    }
+
+    addressTree parent = findParentNode(*tournamentTree, match);
+    if (parent != NULL) {
+        if (parent->left == match) {
+            parent->id_tim1 = 0; // Reset peserta di parent
+        } else if (parent->right == match) {
+            parent->id_tim2 = 0; // Reset peserta di parent
+        }
+        
+        // Jika parent juga sudah ada pemenang, reset juga
+        if (parent->id_pemenang != 0) {
+            parent->id_pemenang = 0;
+            printf("Pertandingan selanjutnya juga direset karena peserta berubah.\n");
+        }
+    }
+
+    printf("Pertandingan dengan ID %d telah berhasil diundo.\n", result.matchID);
+    
+    // Tampilkan info tim yang terpengaruh
+    if (tim1 != NULL) {
+        printf("Statistik %s diperbarui: %d menang, %d kalah, %d laga\n", 
+               tim1->namaTim, tim1->kemenangan, tim1->kekalahan, tim1->laga);
+    }
+    if (tim2 != NULL) {
+        printf("Statistik %s diperbarui: %d menang, %d kalah, %d laga\n", 
+               tim2->namaTim, tim2->kemenangan, tim2->kekalahan, tim2->laga);
+    }
+}
+
+void updateMatchResult(addressTree root, int match_id, int id_pemenang, int skor1, int skor2, addressList head, Stack *history) {
+    addressTree match_node = findMatchNode(root, match_id);
+    if (match_node == NULL) {
+        printf("Pertandingan dengan ID %d tidak ditemukan.\n", match_id);
+        return;
+    }
+    
+    // Update pemenang
+    match_node->id_pemenang = id_pemenang;
+
+    // Update statistik tim dengan benar
+    addressList tim1 = searchNodeById(head, match_node->id_tim1);
+    addressList tim2 = searchNodeById(head, match_node->id_tim2);
+    
+    if (tim1 != NULL && match_node->id_tim1 != 0) {
+        // Tim 1: menang jika id_pemenang == id_tim1, kalah sebaliknya
+        int menang = (id_pemenang == match_node->id_tim1) ? 1 : 0;
+        int kalah = (id_pemenang == match_node->id_tim1) ? 0 : 1;
+        updateTeamStats(head, tim1->namaTim, menang, kalah);
+    }
+    
+    if (tim2 != NULL && match_node->id_tim2 != 0) {
+        // Tim 2: menang jika id_pemenang == id_tim2, kalah sebaliknya  
+        int menang = (id_pemenang == match_node->id_tim2) ? 1 : 0;
+        int kalah = (id_pemenang == match_node->id_tim2) ? 0 : 1;
+        updateTeamStats(head, tim2->namaTim, menang, kalah);
+    }
+
+    // Update parent node
+    addressTree parent = findParentNode(root, match_node);
+    if (parent != NULL && id_pemenang != 0) {
+        if (parent->left == match_node) {
+            parent->id_tim1 = id_pemenang;
+        } else if (parent->right == match_node) {
+            parent->id_tim2 = id_pemenang;
+        }
+    }
+
+    // Simpan ke history
+    MatchResult result = {
+        match_id,
+        match_node->id_tim1,
+        match_node->id_tim2,
+        id_pemenang,
+        calculateRoundNumber(root, match_id, head),
+        skor1,
+        skor2
+    };
+    push(history, result);
+    
+    printf("Statistik tim berhasil diperbarui.\n");
+}
