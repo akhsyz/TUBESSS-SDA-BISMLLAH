@@ -1,6 +1,7 @@
-// Nama : Muhammad Danish Aufa
-// NIM : 241524052
-// Deskripsi : File ini berisikan implementasi dari fungsi-fungsi yang dideklarasikan di linkedlist.h untuk mengelola linked list
+/*
+PIC : aufa
+NIM : 241524052
+*/
 
 #include "linkedlist.h"
 
@@ -38,30 +39,40 @@ void displayLinkedList(addressList head) {
         printf("Daftar tim kosong.\n");
         return;
     }
-   
-    printf("\033[1;36m"); 
-    printf("\n== Daftar Tim ==\n");
-    printf("%-5s %-8s %-6s %-6s %-6s\n", 
-           "ID", "Nama", "Laga", "Menang", "Kalah");
-    printf("\033[0m"); 
+    
+    printf("\n\033[1;36m");
+    printf("==================================================\n");
+    printf("                  DAFTAR TIM                     \n");
+    printf("==================================================\n");
+    printf("\033[0m");
+    
+    printf("\033[1;33m"); 
+    printf("%-5s | %-20s\n", "ID", "Nama Tim");
+    printf("==================================================\n");
+    printf("\033[0m");
+    
     addressList current = head;
-    int row = 0;
+    int count = 0;
+    
     while (current != NULL) {
-        
-        if (row % 2 == 0)
+        if (count % 2 == 0) {
             printf("\033[1;37m"); 
-        else
+        } else {
             printf("\033[0;37m"); 
-        char namaPendek[9];
-        strncpy(namaPendek, current->namaTim, 8);
-        namaPendek[8] = '\0';
-        printf("%-5d %-8s %-6d %-6d %-6d\n", 
-               current->id_tim, namaPendek, 
-               current->laga, current->kemenangan, current->kekalahan);
+        }
+        
+        printf("%-5d | %-20s\n", current->id_tim, current->namaTim);
         printf("\033[0m"); 
+        
         current = current->next;
-        row++;
+        count++;
     }
+    
+    printf("\033[1;36m");
+    printf("==================================================\n");
+    printf("Total Tim Terdaftar: %d\n", count);
+    printf("==================================================\n");
+    printf("\033[0m");
 }
 
 addressList createNode(infotype info) {
@@ -120,25 +131,53 @@ void deleteFirst(addressList *head) {
     free(temp);
 }
 
+void renumberTeamIDs(addressList head) {
+    addressList temp = head;
+    int new_id = 1;
+    int renumbered_count = 0;
+    
+    while (temp != NULL) {
+        if (temp->id_tim != new_id) {
+            temp->id_tim = new_id;
+            renumbered_count++;
+        }
+        new_id++;
+        temp = temp->next;
+    }
+    
+    next_id = new_id;
+    
+    if (renumbered_count > 0) {
+        printf("ID tim telah diurutkan ulang (%d tim diperbarui).\n", renumbered_count);
+    }
+}
+
 void deleteValue(addressList *head, infotype info) {
     if (*head == NULL) {
         printf("Daftar tim kosong.\n");
         return;
     }
+    
     if (strcmp((*head)->namaTim, info) == 0) {
         addressList temp = *head;
         *head = (*head)->next;
         free(temp);
+        
+        renumberTeamIDs(*head);
         return;
     }
+    
     addressList prev = *head, temp = (*head)->next;
     while (temp != NULL && strcmp(temp->namaTim, info) != 0) {
         prev = temp;
         temp = temp->next;
     }
+    
     if (temp != NULL) {
         prev->next = temp->next;
         free(temp);
+        
+        renumberTeamIDs(*head);
     } else {
         printf("Tim %s tidak ditemukan.\n", info);
     }
@@ -180,10 +219,48 @@ addressList searchNodeById(addressList head, int id_tim) {
 
 void resetAllTeamStats(addressList head) {
     addressList temp = head;
+    int reset_count = 0;
+    
+    while (temp != NULL) {
+        temp->laga = 0;
+        temp->kemenangan = 0;
+        temp->kekalahan = 0;
+        reset_count++;
+        temp = temp->next;
+    }
+    
+    printf("   - %d tim direset statistiknya (laga=0, menang=0, kalah=0)\n", reset_count);
+}
+
+void resetAllTeamStatsSilent(addressList head) {
+    addressList temp = head;
+    
     while (temp != NULL) {
         temp->laga = 0;
         temp->kemenangan = 0;
         temp->kekalahan = 0;
         temp = temp->next;
+    }        
+}
+
+addressList searchNode(addressList head, char* namaTim) {
+    addressList temp = head;
+    while (temp != NULL) {
+        if (strcmp(temp->namaTim, namaTim) == 0) {
+            return temp;
+        }
+        temp = temp->next;
     }
+    return NULL;
+}
+
+void reorderTeamIDs(addressList *head) {
+    if (*head == NULL) {
+        printf("Daftar tim kosong, tidak ada yang perlu diurutkan.\n");
+        return;
+    }
+    
+    printf("Mengurutkan ulang ID tim...\n");
+    renumberTeamIDs(*head);
+    printf("ID tim telah diurutkan ulang!\n");
 }
