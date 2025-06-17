@@ -45,7 +45,6 @@ void clearStack(Stack* s);
 int getStackSize(Stack* s);
 void clearStackSilent(Stack* s);
 
-// TAMBAHAN: Alias untuk kompatibilitas dengan tournament.c
 #define initStack inisialisasiStack
 #define isStackEmpty apakahStackKosong
 #define pushStack(s, match_id, winner_id) do { \

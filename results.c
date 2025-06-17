@@ -1,3 +1,8 @@
+/*
+PIC : akhsya 
+NIM : 241524039
+*/
+
 #include "results.h"
 
 static void tampilkanPertandinganTersediaHelper(addressTree root, addressList head) {
@@ -36,7 +41,7 @@ void tampilkanStatistik(addressList head) {
     printf("\n================================================================================\n");
     printf("||                          == Statistik Tim ==                               ||\n");
     printf("================================================================================\n");
-    printf("|| %-4s | %-8s | %-6s | %-8s | %-8s | %-10s               ||\n", 
+    printf("|| %-4s | %-8s | %-6s | %-8s | %-8s | %-10s                ||\n", 
            "ID", "Nama", "Laga", "Menang", "Kalah", "Win Rate");
     printf("================================================================================\n");
     printf("\033[0m");
@@ -78,7 +83,7 @@ void tampilkanStatistik(addressList head) {
             strcpy(win_rate_str, "N/A");
         }
         
-        printf("|| %-4d | %-8s | %-6d | %-8d | %-8d | %-10s               ||\n",
+        printf("|| %-4d | %-8s | %-6d | %-8d | %-8d | %-10s                ||\n",
                current->id_tim, namaPendek, current->laga, current->kemenangan, 
                current->kekalahan, win_rate_str);
         printf("\033[0m");
@@ -89,7 +94,7 @@ void tampilkanStatistik(addressList head) {
     // Footer dengan total statistik
     printf("\033[1;36m");
     printf("================================================================================\n");
-    printf("|| TOTAL    | %-8d | %-6d | %-8d | %-8d | %-10s               ||\n",
+    printf("|| TOTAL    | %-8d | %-6d | %-8d | %-8d | %-10s             ||\n",
            total_teams, total_matches, total_wins, total_losses, 
            (total_matches > 0) ? "100.0%" : "N/A");
     printf("================================================================================\n");
@@ -103,7 +108,7 @@ void tampilkanStatistik(addressList head) {
     printf("\033[0m");
 }
 
-void tampilkanHistori(Stack *s) {
+void tampilkanHistori(Stack *s, addressList head) {
     if (apakahStackKosong(s)) {
         printf("Riwayat pertandingan kosong.\n");
         return;
@@ -113,55 +118,7 @@ void tampilkanHistori(Stack *s) {
     printf("\n================================================================================\n");
     printf("||                          == Riwayat Pertandingan ==                        ||\n");
     printf("================================================================================\n");
-    printf("|| %-6s | %-8s | %-4s | %-8s | %-4s | %-8s | %-5s         ||\n",
-           "Match", "Tim 1", "Skor", "Tim 2", "Skor", "Pemenang", "Ronde");
-    printf("================================================================================\n");
-    printf("\033[0m"); // Reset
-
-    StackNode *current = s->top;
-    int row = 0;
-    int total_matches = 0;
-    
-    while (current != NULL) {
-        total_matches++;
-        
-        // Warna baris: selang-seling
-        if (row % 2 == 0)
-            printf("\033[1;37m"); // White bold
-        else
-            printf("\033[0;37m"); // Gray
-
-        printf("|| %-6d | %-8d | %-4d | %-8d | %-4d | %-8d | %-5d         ||\n",
-               current->data.matchID,
-               current->data.team1Id,
-               current->data.skorTim1,
-               current->data.team2Id,
-               current->data.skorTim2,
-               current->data.idPemenang,
-               current->data.nomorRonde);
-        printf("\033[0m"); // Reset
-        current = current->next;
-        row++;
-    }
-    
-    printf("\033[1;36m");
-    printf("================================================================================\n");
-    printf("|| TOTAL PERTANDINGAN SELESAI: %-46d ||\n", total_matches);
-    printf("================================================================================\n");
-    printf("\033[0m");
-}
-
-void tampilkanHistoriDenganNama(Stack *s, addressList head) {
-    if (apakahStackKosong(s)) {
-        printf("Riwayat pertandingan kosong.\n");
-        return;
-    }
-    
-    printf("\033[1;36m"); // Cyan bold
-    printf("\n================================================================================\n");
-    printf("||                          == Riwayat Pertandingan ==                        ||\n");
-    printf("================================================================================\n");
-    printf("|| %-6s | %-12s | %-4s | %-12s | %-4s | %-12s | %-5s   ||\n",
+    printf("|| %-6s | %-12s | %-4s | %-12s | %-4s | %-12s | %-5s  ||\n",
            "Match", "Tim 1", "Skor", "Tim 2", "Skor", "Pemenang", "Ronde");
     printf("================================================================================\n");
     printf("\033[0m"); // Reset
@@ -208,7 +165,7 @@ void tampilkanHistoriDenganNama(Stack *s, addressList head) {
             snprintf(winner_name, sizeof(winner_name), "Tim %d", current->data.idPemenang);
         }
 
-        printf("|| %-6d | %-12s | %-4d | %-12s | %-4d | %-12s | %-5d   ||\n",
+        printf("|| %-6d | %-12s | %-4d | %-12s | %-4d | %-12s | %-5d  ||\n",
                current->data.matchID,
                tim1_name,
                current->data.skorTim1,
@@ -234,6 +191,7 @@ void inputMatchResult(addressTree *tournamentTree, addressList head, Stack *matc
     printf("           INPUT HASIL PERTANDINGAN           \n");
     printf("===============================================\n");
     printf("\033[0m");
+    
     printf("\nPertandingan yang dapat dimainkan:\n");
     printf("===============================================\n");
     tampilkanPertandinganTersediaHelper(*tournamentTree, head);
