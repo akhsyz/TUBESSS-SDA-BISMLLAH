@@ -374,3 +374,270 @@ addressList parseJsonTeams(const char* json) {
     
     return head;
 }
+
+// Fungsi helper untuk parsing matches dari JSON - fix conversion warning
+void parseJsonMatches(const char* json, Stack* history) {
+    char* matches_start = strstr(json, "\"match_history\": [");
+    if (matches_start == NULL) return;
+    
+    matches_start += strlen("\"match_history\": [");
+    char* matches_end = strstr(matches_start, "],");
+    if (matches_end == NULL) return;
+    
+    // Parse matches and push to stack
+    char* current = matches_start;
+    while (current < matches_end) {
+        char* match_start = strstr(current, "{");
+        if (match_start == NULL || match_start >= matches_end) break;
+        
+        char* match_end = strstr(match_start, "}");
+        if (match_end == NULL || match_end >= matches_end) break;
+        
+        // Parse match data - fix conversion warning
+        MatchResult result = {0};
+        
+        ptrdiff_t match_len_diff = match_end - match_start + 1;
+        if (match_len_diff <= 0 || match_len_diff > 300) {
+            current = match_end + 1;
+            continue;
+        }
+        
+        size_t match_len = (size_t)match_len_diff;
+        char match_json[300];
+        strncpy(match_json, match_start, match_len);
+        match_json[match_len] = '\0';
+        
+        char* match_id_pos = strstr(match_json, "\"match_id\":");
+        if (match_id_pos != NULL) {
+            sscanf(match_id_pos, "\"match_id\": %d", &result.matchID);
+        }
+        
+        char* team1_pos = strstr(match_json, "\"team1_id\":");
+        if (team1_pos != NULL) {
+            sscanf(team1_pos, "\"team1_id\": %d", &result.team1Id);
+        }
+        
+        char* team2_pos = strstr(match_json, "\"team2_id\":");
+        if (team2_pos != NULL) {
+            sscanf(team2_pos, "\"team2_id\": %d", &result.team2Id);
+        }
+        
+        char* winner_pos = strstr(match_json, "\"winner_id\":");
+        if (winner_pos != NULL) {
+            sscanf(winner_pos, "\"winner_id\": %d", &result.idPemenang);
+        }
+        
+        char* round_pos = strstr(match_json, "\"round\":");
+        if (round_pos != NULL) {
+            sscanf(round_pos, "\"round\": %d", &result.nomorRonde);
+        }
+        
+        // Parse score object
+        char* score_start = strstr(match_json, "\"score\": {");
+        if (score_start != NULL) {
+            char* team1_score = strstr(score_start, "\"team1\":");
+            if (team1_score != NULL) {
+                sscanf(team1_score, "\"team1\": %d", &result.skorTim1);
+            }
+            
+            char* team2_score = strstr(score_start, "\"team2\":");
+            if (team2_score != NULL) {
+                sscanf(team2_score, "\"team2\": %d", &result.skorTim2);
+            }
+        }
+        
+        push(history, result);
+        current = match_end + 1;
+    }
+}
+
+// Fungsi helper untuk parsing bracket dari JSON - hapus unused parameter warning
+addressTree parseJsonBracket(const char* json) {
+    // Suppress unused parameter warning
+    (void)json;
+    
+    return NULL; // Sementara return NULL, bisa dibangun ulang dari match history
+}
+
+// Fungsi wrapper untuk kompatibilitas dengan sistem lama - dengan folder terpisah
+void saveTeamsToFile(addressList head, const char* filename) {
+    printf("Menggunakan format JSON baru instead of TXT...\n");
+    
+    // Ekstrak nama tournament dari filename
+    char tournament_name[100];
+    char* base_name = strrchr(filename, '/');
+    if (base_name != NULL) {
+        base_name++; // Skip the '/'
+    } else {
+        base_name = (char*)filename;
+    }
+    
+    // Copy dan hapus ekstensi
+    strncpy(tournament_name, base_name, sizeof(tournament_name) - 1);
+    tournament_name[sizeof(tournament_name) - 1] = '\0';
+    
+    char* ext = strstr(tournament_name, "_teams.txt");
+    if (ext != NULL) {
+        *ext = '\0'; // Potong di sini
+    }
+    
+    // Buat path JSON dalam folder terpisah
+    char json_path[300];
+    createJSONPath(tournament_name, json_path, sizeof(json_path));
+    
+    // Buat data dummy untuk tournament info
+    Stack dummy_history;
+    inisialisasiStack(&dummy_history);
+    
+    saveTournamentToJSON(head, NULL, &dummy_history, tournament_name, json_path);
+}
+
+addressList loadTeamsFromFile(const char* filename) {
+    printf("Mencoba memuat format JSON baru...\n");
+    
+    // Ekstrak nama tournament dari filename
+    char tournament_name[100];
+    char* base_name = strrchr(filename, '/');
+    if (base_name != NULL) {
+        base_name++; // Skip the '/'
+    } else {
+        base_name = (char*)filename;
+    }
+    
+    // Copy dan hapus ekstensi
+    strncpy(tournament_name, base_name, sizeof(tournament_name) - 1);
+    tournament_name[sizeof(tournament_name) - 1] = '\0';
+    
+    char* ext = strstr(tournament_name, "_teams.txt");
+    if (ext != NULL) {
+        *ext = '\0'; // Potong di sini
+    }
+    
+    // Coba format JSON dari folder terpisah
+    char json_path[300];
+    createJSONPath(tournament_name, json_path, sizeof(json_path));
+    
+    TournamentData* data = loadTournamentFromJSON(json_path);
+    if (data != NULL) {
+        addressList result = data->head;
+        free(data->history);
+        free(data);
+        return result;
+    }
+    
+    // Fallback ke format TXT lama jika JSON tidak ada
+    printf("File JSON tidak ditemukan, mencoba format TXT lama...\n");
+    return loadTeamsFromFileTXT(filename);
+}
+
+// Hapus unused parameter warnings
+void saveMatchHistoryToFile(Stack* history, const char* filename) {
+    (void)history;    // Suppress unused warning
+    (void)filename;   // Suppress unused warning
+    
+    printf("Match history sekarang disimpan dalam format JSON lengkap.\n");
+    printf("Gunakan saveTournamentToJSON() untuk menyimpan semua data.\n");
+}
+
+Stack* loadMatchHistoryFromFile(const char* filename) {
+    (void)filename;   // Suppress unused warning
+    
+    printf("Match history sekarang dimuat dari format JSON lengkap.\n");
+    printf("Gunakan loadTournamentFromJSON() untuk memuat semua data.\n");
+    
+    Stack* history = malloc(sizeof(Stack));
+    if (history != NULL) {
+        inisialisasiStack(history);
+    }
+    return history;
+}
+
+void saveTournamentTreeToFile(addressTree root, const char* filename) {
+    (void)root;       // Suppress unused warning
+    (void)filename;   // Suppress unused warning
+    
+    printf("Tournament tree sekarang disimpan dalam format JSON lengkap.\n");
+    printf("Gunakan saveTournamentToJSON() untuk menyimpan semua data.\n");
+}
+
+addressTree loadTournamentTreeFromFile(const char* filename) {
+    (void)filename;   // Suppress unused warning
+    
+    printf("Tournament tree sekarang dimuat dari format JSON lengkap.\n");
+    printf("Gunakan loadTournamentFromJSON() untuk memuat semua data.\n");
+    return NULL;
+}
+
+// Fungsi untuk memuat format TXT lama (fallback)
+addressList loadTeamsFromFileTXT(const char* filename) {
+    FILE* file = fopen(filename, "r");
+    if (file == NULL) {
+        printf("Gagal membuka file %s untuk membaca.\n", filename);
+        return NULL;
+    }
+
+    addressList head = NULL;
+    char line[256];
+    int id_tim = 0, laga = 0, kemenangan = 0, kekalahan = 0;
+    char namaTim[50] = "";
+    bool validBlock = false;
+    bool hasId = false, hasNama = false, hasLaga = false, hasKemenangan = false, hasKekalahan = false;
+
+    while (fgets(line, sizeof(line), file)) {
+        line[strcspn(line, "\n")] = '\0'; 
+
+        if (strcmp(line, "[TEAM]") == 0) {
+            validBlock = true;
+            hasId = hasNama = hasLaga = hasKemenangan = hasKekalahan = false;
+            id_tim = laga = kemenangan = kekalahan = 0;
+            namaTim[0] = '\0';
+            continue;
+        } else if (strcmp(line, "[END]") == 0 && validBlock) {
+            if (hasId && hasNama && hasLaga && hasKemenangan && hasKekalahan) {
+                addressList newNode = (addressList)malloc(sizeof(node));
+                if (newNode == NULL) {
+                    printf("Gagal mengalokasi memori untuk node tim.\n");
+                    DeAlokasi(&head);
+                    fclose(file);
+                    return NULL;
+                }
+                newNode->id_tim = id_tim;
+                strncpy(newNode->namaTim, namaTim, 49);
+                newNode->namaTim[49] = '\0';
+                newNode->laga = laga;
+                newNode->kemenangan = kemenangan;
+                newNode->kekalahan = kekalahan;
+                newNode->next = NULL;
+                insertAtLast(&head, newNode);
+            } else {
+                printf("Blok data tim tidak lengkap, melewati.\n");
+            }
+            validBlock = false;
+            continue;
+        }
+
+        if (validBlock) {
+            if (strncmp(line, "ID: ", 4) == 0 && sscanf(line + 4, "%d", &id_tim) == 1) {
+                hasId = true;
+            } else if (strncmp(line, "Nama: ", 6) == 0) {
+                strncpy(namaTim, line + 6, 49);
+                namaTim[49] = '\0';
+                hasNama = true;
+            } else if (strncmp(line, "Laga: ", 6) == 0 && sscanf(line + 6, "%d", &laga) == 1) {
+                hasLaga = true;
+            } else if (strncmp(line, "Kemenangan: ", 12) == 0 && sscanf(line + 12, "%d", &kemenangan) == 1) {
+                hasKemenangan = true;
+            } else if (strncmp(line, "Kekalahan: ", 11) == 0 && sscanf(line + 11, "%d", &kekalahan) == 1) {
+                hasKekalahan = true;
+            }
+        }
+    }
+
+    fclose(file);
+    if (head == NULL) {
+        printf("Tidak ada data tim yang berhasil dimuat dari %s.\n", filename);
+    } else {
+        printf("Data tim berhasil dimuat dari format TXT lama: %s.\n", filename);
+    }
+    return head;
+}

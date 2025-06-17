@@ -43,8 +43,9 @@ boolean pop(Stack* s, MatchResult* result);
 boolean peek(Stack* s, MatchResult* result);
 void clearStack(Stack* s);
 int getStackSize(Stack* s);
+void clearStackSilent(Stack* s);
 
-// untuk kompatibilitas dengan tournament.c
+// TAMBAHAN: Alias untuk kompatibilitas dengan tournament.c
 #define initStack inisialisasiStack
 #define isStackEmpty apakahStackKosong
 #define pushStack(s, match_id, winner_id) do { \

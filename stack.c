@@ -71,11 +71,36 @@ boolean peek(Stack* s, MatchResult* result){
   return true;
 }
 
-// Kosongkan semua isi stack 
 void clearStack(Stack* s){
+  if (s == NULL) return;
+  
   MatchResult dummy;
-  while (pop(s, &dummy));
+  int cleared_count = 0;
+  
+  while (pop(s, &dummy)) {
+    cleared_count++;
+  }
+  
   s->size = 0;
+  s->top = NULL;
+  
+  if (cleared_count > 0) {
+    printf("   - %d match history dihapus dari stack\n", cleared_count);
+  }
+}
+
+void clearStackSilent(Stack* s){
+  if (s == NULL) return;
+  
+  MatchResult dummy;
+  
+  while (pop(s, &dummy)) {
+   
+  }
+  
+  s->size = 0;
+  s->top = NULL;
+  
 }
 
 // Mendapatkan ukuran stack
