@@ -1,14 +1,21 @@
+/*
+PIC : akhsya 
+NIM : 241524039
+*/
+
 #include "fileio.h"
-#include <string.h>
-#include <stdbool.h>
-#include <time.h>
-#include <sys/stat.h>  
-#include <errno.h>     
+
+/* Deskripsi   : Prosedur untuk membuat folder "tournament_data" jika belum ada. Jika folder sudah ada, prosedur ini tidak melakukan apa-apa. Menampilkan peringatan jika terjadi kegagalan lain selain folder sudah ada.
+    I.S         : Sistem file tidak memiliki folder "tournament_data" atau sudah memilikinya.
+    F.S         : Folder "tournament_data" ada di direktori kerja saat ini.
+*/
 
 void createDataFolder() {
     const char* folder_name = "tournament_data";
     
+    // Coba buat folder (akan gagal jika sudah ada, tapi tidak masalah)
 #ifdef _WIN32
+    // Windows
     if (mkdir(folder_name) != 0) {
         if (errno != EEXIST) {
             printf("Warning: Gagal membuat folder %s\n", folder_name);
@@ -24,12 +31,26 @@ void createDataFolder() {
 #endif
 }
 
+/* Deskripsi   : Prosedur untuk membangun jalur file lengkap untuk menyimpan atau memuat data turnamen dalam format JSON. Memastikan folder data ada terlebih dahulu.
+    I.S         : - tournament_name adalah string nama turnamen.
+                  - output_path adalah buffer char kosong yang akan menyimpan jalur file.
+                  - max_len adalah ukuran maksimum buffer output_path.
+    F.S         : - Folder "tournament_data" ada.
+                  - output_path berisi jalur lengkap ke file JSON (contoh: "tournament_data/NamaTurnamen.json").
+*/
+
 void createJSONPath(const char* tournament_name, char* output_path, size_t max_len) {
     createDataFolder(); // Pastikan folder ada
     snprintf(output_path, max_len, "tournament_data/%s.json", tournament_name);
 }
 
-// Fungsi helper untuk escape string dalam JSON
+
+/* Deskripsi   : Fungsi helper untuk melakukan escaping pada string agar aman digunakan dalam format JSON. Mengganti karakter khusus seperti tanda kutip ganda (") dan backslash (\) dengan urutan escape yang sesuai.
+    I.S         : - input adalah string yang mungkin berisi karakter yang perlu di-escape.
+                  - output adalah buffer char kosong yang akan menyimpan string yang sudah di-escape.
+    F.S         : output berisi input string dengan karakter " dan \ yang di-escape.
+*/
+
 void escapeJsonString(const char* input, char* output) {
     int j = 0;
     for (int i = 0; input[i] != '\0'; i++) {
@@ -46,19 +67,40 @@ void escapeJsonString(const char* input, char* output) {
     output[j] = '\0';
 }
 
-// Fungsi untuk mendapatkan timestamp saat ini
+/* Deskripsi   : Prosedur untuk mendapatkan timestamp (tanggal dan waktu) saat ini dalam format string "YYYY-MM-DD HH:MM:SS".
+    I.S         : timestamp adalah buffer char kosong dengan ukuran yang cukup.
+    F.S         : timestamp berisi string representasi tanggal dan waktu saat ini.
+*/
+
 void getCurrentTimestamp(char* timestamp) {
     time_t now = time(0);
     struct tm* timeinfo = localtime(&now);
     strftime(timestamp, 20, "%Y-%m-%d %H:%M:%S", timeinfo);
 }
 
-// Fungsi untuk menyimpan semua data turnamen dalam format JSON
+/* Deskripsi   : Prosedur untuk menyimpan semua data turnamen (daftar tim, riwayat pertandingan, dan struktur bracket) ke dalam file JSON dengan output ke konsol. Ini adalah pembungkus untuk `saveTournamentToJSONQuiet` dengan `show_output` diatur ke true.
+    I.S         : - head adalah pointer ke linked list tim yang berisi data tim yang valid.
+                  - root adalah pointer ke root tree bracket turnamen yang valid (mungkin NULL jika belum ada bracket).
+                  - history adalah pointer ke stack riwayat pertandingan yang valid (mungkin kosong).
+                  - tournament_name adalah string nama turnamen.
+                  - filename adalah string nama file tujuan.
+    F.S         : Data turnamen (tim, riwayat pertandingan, dan bracket) berhasil ditulis ke file JSON yang ditentukan, dan pesan konfirmasi ditampilkan di konsol. Jika gagal, pesan kesalahan ditampilkan.
+*/
+
 void saveTournamentToJSON(addressList head, addressTree root, Stack* history, const char* tournament_name, const char* filename) {
     saveTournamentToJSONQuiet(head, root, history, tournament_name, filename, true);
 }
 
-// Fungsi untuk menyimpan tanpa output verbose (untuk exit yang clean)
+/* Deskripsi   : Prosedur untuk menyimpan semua data turnamen (daftar tim, riwayat pertandingan, dan struktur bracket) ke dalam file JSON. Prosedur ini dapat diatur untuk menampilkan atau tidak menampilkan output ke konsol.
+    I.S         : - head adalah pointer ke linked list tim yang berisi data tim yang valid.
+                  - root adalah pointer ke root tree bracket turnamen yang valid (mungkin NULL jika belum ada bracket).
+                  - history adalah pointer ke stack riwayat pertandingan yang valid (mungkin kosong).
+                  - tournament_name adalah string nama turnamen.
+                  - filename adalah string nama file tujuan.
+                  - show_output adalah boolean (true untuk menampilkan output ke konsol, false untuk tidak).
+    F.S         : Data turnamen (tim, riwayat pertandingan, dan bracket) berhasil ditulis ke file JSON yang ditentukan. Jika `show_output` adalah true, pesan konfirmasi ditampilkan di konsol. Jika gagal membuka file, pesan kesalahan ditampilkan.
+*/
+
 void saveTournamentToJSONQuiet(addressList head, addressTree root, Stack* history, const char* tournament_name, const char* filename, bool show_output) {
     FILE* file = fopen(filename, "w");
     if (file == NULL) {
@@ -168,7 +210,13 @@ void saveTournamentToJSONQuiet(addressList head, addressTree root, Stack* histor
     }
 }
 
-// Fungsi helper untuk menyimpan bracket structure ke JSON - ganti nama parameter
+/* Deskripsi   : Fungsi helper rekursif untuk menulis struktur bracket turnamen (binary tree) ke dalam file JSON dengan format indentasi yang sesuai.
+    I.S         : - file adalah pointer ke file yang sudah terbuka untuk ditulis.
+                  - treeNode adalah pointer ke node pohon bracket saat ini yang akan ditulis.
+                  - indent adalah tingkat indentasi saat ini untuk format JSON.
+    F.S         : Struktur node bracket saat ini, beserta anak-anaknya (jika ada), telah ditulis ke dalam file JSON dengan indentasi yang benar.
+*/
+
 void saveBracketToJSON(FILE* file, addressTree treeNode, int indent) {
     if (treeNode == NULL) {
         fprintf(file, "null");
@@ -202,7 +250,59 @@ void saveBracketToJSON(FILE* file, addressTree treeNode, int indent) {
     fprintf(file, "%s}", indent_str);
 }
 
-// Fungsi untuk memuat semua data turnamen dari JSON - fix conversion warnings
+
+void rebuildMatchResultsFromHistory(addressTree root, Stack* history, addressList head) {
+    (void)head; // Suppress unused parameter warning
+    
+    if (root == NULL || history == NULL || apakahStackKosong(history)) {
+        return; // Silent jika tidak ada data
+    }
+    
+    // Convert stack ke array untuk proses dari pertandingan paling awal
+    MatchResult matches[100]; // Asumsi max 100 matches
+    int match_count = 0;
+    
+    // Pop semua dari history ke array (simpan order chronological)
+    Stack tempStack;
+    inisialisasiStack(&tempStack);
+    MatchResult result;
+    
+    // Silent processing - tanpa debug output
+    while (pop(history, &result)) {
+        matches[match_count++] = result;
+        push(&tempStack, result);
+    }
+    
+    // Restore history seperti semula
+    while (pop(&tempStack, &result)) {
+        push(history, result);
+    }
+    
+    // Terapkan hasil pertandingan dari yang paling awal (reverse order)
+    for (int i = match_count - 1; i >= 0; i--) {
+        addressTree match_node = findMatchNode(root, matches[i].matchID);
+        if (match_node != NULL) {
+            // Update pemenang
+            match_node->id_pemenang = matches[i].idPemenang;
+            
+            // Update parent nodes agar peserta selanjutnya ter-update
+            updateParentNodes(root, match_node);
+        }
+    }
+    
+    // Silent processing - tidak ada output
+    if (match_count > 0) {
+        // Proses berhasil, tapi tidak perlu output
+    }
+}
+
+/* Deskripsi   : Fungsi untuk memuat semua data turnamen (informasi turnamen, daftar tim, riwayat pertandingan, dan struktur bracket) dari file JSON yang ditentukan. Ini mengalokasikan memori untuk struktur data dan mengisi mereka berdasarkan konten file.
+    I.S         : filename adalah string nama file JSON yang akan dibaca.
+    F.S         : - Mengembalikan pointer ke struktur TournamentData yang berisi data turnamen yang dimuat.
+                  - Jika file tidak ditemukan atau gagal dibaca, atau parsing gagal, mengembalikan NULL dan menampilkan pesan kesalahan.
+                  - Jika berhasil, data turnamen dimuat ke dalam memori.
+*/
+
 TournamentData* loadTournamentFromJSON(const char* filename) {
     FILE* file = fopen(filename, "r");
     if (file == NULL) {
@@ -255,23 +355,58 @@ TournamentData* loadTournamentFromJSON(const char* filename) {
     // Parse match history
     parseJsonMatches(json_content, data->history);
     
-    // Parse bracket (basic reconstruction)
-    data->root = parseJsonBracket(json_content);
-
+    if (data->head != NULL) {
+        int total_teams = countNode(data->head);
+        
+        if (total_teams >= 3 && total_teams <= 12) {
+            // Buat queue untuk rebuild tournament tree
+            Queue tempQueue;
+            initQueue(&tempQueue);
+            
+            // Masukkan semua tim ke queue (silent)
+            addressList temp = data->head;
+            while (temp != NULL) {
+                enqueue(&tempQueue, temp);
+                temp = temp->next;
+            }
+            
+            // Rebuild tournament tree
+            data->root = buildTournamentTree(&tempQueue, total_teams, data->head);
+            
+            // Cleanup queue
+            clearQueue(&tempQueue);
+            
+            if (data->root != NULL) {
+                // PENTING: Terapkan kembali hasil pertandingan dari history
+                if (!apakahStackKosong(data->history)) {
+                    rebuildMatchResultsFromHistory(data->root, data->history, data->head);
+                }
+            }
+        }
+    }
     free(json_content);
     
     if (data->head != NULL) {
-        printf("Data turnamen '%s' berhasil dimuat dari %s.\n", data->tournament_name, filename);
+        // Silent success - tidak ada output loading
         return data;
     } else {
         printf("Gagal memuat data turnamen dari %s.\n", filename);
-        free(data->history);
+        if (data->history != NULL) {
+            clearStack(data->history);
+            free(data->history);
+        }
         free(data);
         return NULL;
     }
 }
 
-// Fungsi helper untuk parsing JSON string value - fix conversion warning
+/* Deskripsi   : Fungsi helper untuk mengekstrak nilai string dari objek JSON berdasarkan kunci yang diberikan.
+    I.S         : - json adalah string konten JSON lengkap.
+                  - key adalah string kunci yang nilainya ingin diekstrak.
+                  - output adalah buffer char kosong yang akan menyimpan nilai string yang diekstrak.
+                  - max_len adalah ukuran maksimum buffer output.
+    F.S         : output berisi nilai string yang ditemukan untuk kunci yang diberikan. Jika kunci tidak ditemukan atau terjadi kesalahan parsing, output akan menjadi string kosong.
+*/
 void parseJsonString(const char* json, const char* key, char* output, int max_len) {
     char search_pattern[100];
     snprintf(search_pattern, sizeof(search_pattern), "\"%s\": \"", key);
@@ -300,7 +435,11 @@ void parseJsonString(const char* json, const char* key, char* output, int max_le
     output[len] = '\0';
 }
 
-// Fungsi helper untuk parsing teams dari JSON - fix conversion warning
+/* Deskripsi   : Fungsi helper untuk melakukan parsing bagian "teams" dari konten JSON dan membangun kembali linked list tim yang sesuai. Ini mengekstrak detail setiap tim dan membuat node linked list baru.
+    I.S         : json adalah string konten JSON lengkap yang berisi bagian "teams".
+    F.S         : Mengembalikan pointer ke head dari linked list tim yang baru dibuat, yang berisi data tim dari JSON. Jika bagian "teams" tidak ditemukan atau kosong, mengembalikan NULL.
+*/
+
 addressList parseJsonTeams(const char* json) {
     addressList head = NULL;
     
@@ -375,7 +514,12 @@ addressList parseJsonTeams(const char* json) {
     return head;
 }
 
-// Fungsi helper untuk parsing matches dari JSON - fix conversion warning
+/* Deskripsi   : Fungsi helper untuk melakukan parsing bagian "match_history" dari konten JSON dan mengisi stack riwayat pertandingan. Setiap hasil pertandingan diekstrak dan didorong ke dalam stack.
+    I.S         : - json adalah string konten JSON lengkap yang berisi bagian "match_history".
+                  - history adalah pointer ke stack yang sudah diinisialisasi.
+    F.S         : Stack history berisi semua hasil pertandingan yang ditemukan di bagian "match_history" dalam JSON. Jika bagian tersebut kosong atau tidak ditemukan, stack tetap tidak berubah.
+*/
+
 void parseJsonMatches(const char* json, Stack* history) {
     char* matches_start = strstr(json, "\"match_history\": [");
     if (matches_start == NULL) return;
@@ -427,7 +571,7 @@ void parseJsonMatches(const char* json, Stack* history) {
             sscanf(winner_pos, "\"winner_id\": %d", &result.idPemenang);
         }
         
-        char* round_pos = strstr(match_json, "\"round\":");
+        char* round_pos = strstr(json, "\"round\":");
         if (round_pos != NULL) {
             sscanf(round_pos, "\"round\": %d", &result.nomorRonde);
         }
@@ -449,195 +593,4 @@ void parseJsonMatches(const char* json, Stack* history) {
         push(history, result);
         current = match_end + 1;
     }
-}
-
-// Fungsi helper untuk parsing bracket dari JSON - hapus unused parameter warning
-addressTree parseJsonBracket(const char* json) {
-    // Suppress unused parameter warning
-    (void)json;
-    
-    return NULL; // Sementara return NULL, bisa dibangun ulang dari match history
-}
-
-// Fungsi wrapper untuk kompatibilitas dengan sistem lama - dengan folder terpisah
-void saveTeamsToFile(addressList head, const char* filename) {
-    printf("Menggunakan format JSON baru instead of TXT...\n");
-    
-    // Ekstrak nama tournament dari filename
-    char tournament_name[100];
-    char* base_name = strrchr(filename, '/');
-    if (base_name != NULL) {
-        base_name++; // Skip the '/'
-    } else {
-        base_name = (char*)filename;
-    }
-    
-    // Copy dan hapus ekstensi
-    strncpy(tournament_name, base_name, sizeof(tournament_name) - 1);
-    tournament_name[sizeof(tournament_name) - 1] = '\0';
-    
-    char* ext = strstr(tournament_name, "_teams.txt");
-    if (ext != NULL) {
-        *ext = '\0'; // Potong di sini
-    }
-    
-    // Buat path JSON dalam folder terpisah
-    char json_path[300];
-    createJSONPath(tournament_name, json_path, sizeof(json_path));
-    
-    // Buat data dummy untuk tournament info
-    Stack dummy_history;
-    inisialisasiStack(&dummy_history);
-    
-    saveTournamentToJSON(head, NULL, &dummy_history, tournament_name, json_path);
-}
-
-addressList loadTeamsFromFile(const char* filename) {
-    printf("Mencoba memuat format JSON baru...\n");
-    
-    // Ekstrak nama tournament dari filename
-    char tournament_name[100];
-    char* base_name = strrchr(filename, '/');
-    if (base_name != NULL) {
-        base_name++; // Skip the '/'
-    } else {
-        base_name = (char*)filename;
-    }
-    
-    // Copy dan hapus ekstensi
-    strncpy(tournament_name, base_name, sizeof(tournament_name) - 1);
-    tournament_name[sizeof(tournament_name) - 1] = '\0';
-    
-    char* ext = strstr(tournament_name, "_teams.txt");
-    if (ext != NULL) {
-        *ext = '\0'; // Potong di sini
-    }
-    
-    // Coba format JSON dari folder terpisah
-    char json_path[300];
-    createJSONPath(tournament_name, json_path, sizeof(json_path));
-    
-    TournamentData* data = loadTournamentFromJSON(json_path);
-    if (data != NULL) {
-        addressList result = data->head;
-        free(data->history);
-        free(data);
-        return result;
-    }
-    
-    // Fallback ke format TXT lama jika JSON tidak ada
-    printf("File JSON tidak ditemukan, mencoba format TXT lama...\n");
-    return loadTeamsFromFileTXT(filename);
-}
-
-// Hapus unused parameter warnings
-void saveMatchHistoryToFile(Stack* history, const char* filename) {
-    (void)history;    // Suppress unused warning
-    (void)filename;   // Suppress unused warning
-    
-    printf("Match history sekarang disimpan dalam format JSON lengkap.\n");
-    printf("Gunakan saveTournamentToJSON() untuk menyimpan semua data.\n");
-}
-
-Stack* loadMatchHistoryFromFile(const char* filename) {
-    (void)filename;   // Suppress unused warning
-    
-    printf("Match history sekarang dimuat dari format JSON lengkap.\n");
-    printf("Gunakan loadTournamentFromJSON() untuk memuat semua data.\n");
-    
-    Stack* history = malloc(sizeof(Stack));
-    if (history != NULL) {
-        inisialisasiStack(history);
-    }
-    return history;
-}
-
-void saveTournamentTreeToFile(addressTree root, const char* filename) {
-    (void)root;       // Suppress unused warning
-    (void)filename;   // Suppress unused warning
-    
-    printf("Tournament tree sekarang disimpan dalam format JSON lengkap.\n");
-    printf("Gunakan saveTournamentToJSON() untuk menyimpan semua data.\n");
-}
-
-addressTree loadTournamentTreeFromFile(const char* filename) {
-    (void)filename;   // Suppress unused warning
-    
-    printf("Tournament tree sekarang dimuat dari format JSON lengkap.\n");
-    printf("Gunakan loadTournamentFromJSON() untuk memuat semua data.\n");
-    return NULL;
-}
-
-// Fungsi untuk memuat format TXT lama (fallback)
-addressList loadTeamsFromFileTXT(const char* filename) {
-    FILE* file = fopen(filename, "r");
-    if (file == NULL) {
-        printf("Gagal membuka file %s untuk membaca.\n", filename);
-        return NULL;
-    }
-
-    addressList head = NULL;
-    char line[256];
-    int id_tim = 0, laga = 0, kemenangan = 0, kekalahan = 0;
-    char namaTim[50] = "";
-    bool validBlock = false;
-    bool hasId = false, hasNama = false, hasLaga = false, hasKemenangan = false, hasKekalahan = false;
-
-    while (fgets(line, sizeof(line), file)) {
-        line[strcspn(line, "\n")] = '\0'; 
-
-        if (strcmp(line, "[TEAM]") == 0) {
-            validBlock = true;
-            hasId = hasNama = hasLaga = hasKemenangan = hasKekalahan = false;
-            id_tim = laga = kemenangan = kekalahan = 0;
-            namaTim[0] = '\0';
-            continue;
-        } else if (strcmp(line, "[END]") == 0 && validBlock) {
-            if (hasId && hasNama && hasLaga && hasKemenangan && hasKekalahan) {
-                addressList newNode = (addressList)malloc(sizeof(node));
-                if (newNode == NULL) {
-                    printf("Gagal mengalokasi memori untuk node tim.\n");
-                    DeAlokasi(&head);
-                    fclose(file);
-                    return NULL;
-                }
-                newNode->id_tim = id_tim;
-                strncpy(newNode->namaTim, namaTim, 49);
-                newNode->namaTim[49] = '\0';
-                newNode->laga = laga;
-                newNode->kemenangan = kemenangan;
-                newNode->kekalahan = kekalahan;
-                newNode->next = NULL;
-                insertAtLast(&head, newNode);
-            } else {
-                printf("Blok data tim tidak lengkap, melewati.\n");
-            }
-            validBlock = false;
-            continue;
-        }
-
-        if (validBlock) {
-            if (strncmp(line, "ID: ", 4) == 0 && sscanf(line + 4, "%d", &id_tim) == 1) {
-                hasId = true;
-            } else if (strncmp(line, "Nama: ", 6) == 0) {
-                strncpy(namaTim, line + 6, 49);
-                namaTim[49] = '\0';
-                hasNama = true;
-            } else if (strncmp(line, "Laga: ", 6) == 0 && sscanf(line + 6, "%d", &laga) == 1) {
-                hasLaga = true;
-            } else if (strncmp(line, "Kemenangan: ", 12) == 0 && sscanf(line + 12, "%d", &kemenangan) == 1) {
-                hasKemenangan = true;
-            } else if (strncmp(line, "Kekalahan: ", 11) == 0 && sscanf(line + 11, "%d", &kekalahan) == 1) {
-                hasKekalahan = true;
-            }
-        }
-    }
-
-    fclose(file);
-    if (head == NULL) {
-        printf("Tidak ada data tim yang berhasil dimuat dari %s.\n", filename);
-    } else {
-        printf("Data tim berhasil dimuat dari format TXT lama: %s.\n", filename);
-    }
-    return head;
 }
