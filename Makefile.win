@@ -1,0 +1,55 @@
+# Project: BRACKET
+# Makefile created by Embarcadero Dev-C++ 6.3
+
+CPP      = g++.exe
+CC       = gcc.exe
+WINDRES  = windres.exe
+OBJ      = fileio.o linkedlist.o main.o menu.o queue.o results.o stack.o templatebagan.o tournament.o tree.o
+LINKOBJ  = fileio.o linkedlist.o main.o menu.o queue.o results.o stack.o templatebagan.o tournament.o tree.o
+LIBS     = -L"E:/Data Penting/ProgramFiles/Dev-Cpp/TDM-GCC-64/lib" -L"E:/Data Penting/ProgramFiles/Dev-Cpp/TDM-GCC-64/x86_64-w64-mingw32/lib" -static-libgcc
+INCS     = -I"E:/Data Penting/ProgramFiles/Dev-Cpp/TDM-GCC-64/include" -I"E:/Data Penting/ProgramFiles/Dev-Cpp/TDM-GCC-64/x86_64-w64-mingw32/include" -I"E:/Data Penting/ProgramFiles/Dev-Cpp/TDM-GCC-64/lib/gcc/x86_64-w64-mingw32/9.2.0/include"
+CXXINCS  = -I"E:/Data Penting/ProgramFiles/Dev-Cpp/TDM-GCC-64/include" -I"E:/Data Penting/ProgramFiles/Dev-Cpp/TDM-GCC-64/x86_64-w64-mingw32/include" -I"E:/Data Penting/ProgramFiles/Dev-Cpp/TDM-GCC-64/lib/gcc/x86_64-w64-mingw32/9.2.0/include" -I"E:/Data Penting/ProgramFiles/Dev-Cpp/TDM-GCC-64/lib/gcc/x86_64-w64-mingw32/9.2.0/include/c++"
+BIN      = BRACKET.exe
+CXXFLAGS = $(CXXINCS) 
+CFLAGS   = $(INCS) 
+DEL      = E:\Data Penting\ProgramFiles\Dev-Cpp\devcpp.exe INTERNAL_DEL
+
+.PHONY: all all-before all-after clean clean-custom
+
+all: all-before $(BIN) all-after
+
+clean: clean-custom
+	${DEL} $(OBJ) $(BIN)
+
+$(BIN): $(OBJ)
+	$(CC) $(LINKOBJ) -o $(BIN) $(LIBS)
+
+fileio.o: fileio.c
+	$(CC) -c fileio.c -o fileio.o $(CFLAGS)
+
+linkedlist.o: linkedlist.c
+	$(CC) -c linkedlist.c -o linkedlist.o $(CFLAGS)
+
+main.o: main.c
+	$(CC) -c main.c -o main.o $(CFLAGS)
+
+menu.o: menu.c
+	$(CC) -c menu.c -o menu.o $(CFLAGS)
+
+queue.o: queue.c
+	$(CC) -c queue.c -o queue.o $(CFLAGS)
+
+results.o: results.c
+	$(CC) -c results.c -o results.o $(CFLAGS)
+
+stack.o: stack.c
+	$(CC) -c stack.c -o stack.o $(CFLAGS)
+
+templatebagan.o: templatebagan.c
+	$(CC) -c templatebagan.c -o templatebagan.o $(CFLAGS)
+
+tournament.o: tournament.c
+	$(CC) -c tournament.c -o tournament.o $(CFLAGS)
+
+tree.o: tree.c
+	$(CC) -c tree.c -o tree.o $(CFLAGS)
