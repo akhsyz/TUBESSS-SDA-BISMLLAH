@@ -4,6 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <time.h>
+#include <sys/stat.h>	// Untuk kebutuhan mkdir di fileio
+#include <errno.h>		// Untuk kebutuhan errno di fileio
+#include <math.h>
 
 #define info(P) (P)->info
 #define next(P) (P)->next
